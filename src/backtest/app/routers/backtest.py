@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 import backtrader as bt
 
-from services.backtest import run
+from ..services.backtest import run
 
 router = APIRouter(prefix="/backtest", tags=["backtest"])
 

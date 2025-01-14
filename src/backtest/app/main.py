@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import stocks
+from app.routers import backtest
 
 # from dotenv import load_dotenv
 
@@ -21,7 +21,7 @@ app.add_middleware(
 )
 
 # 라우터 등록
-app.include_router(stocks.router)
+app.include_router(backtest.router)
 
 @app.get("/")
 def root():
