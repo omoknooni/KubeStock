@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import CandlestickChart from "../components/LightChart";
+import config from "../config/apiConfig";
 
 import {
   Container,
@@ -48,7 +49,7 @@ function Backtest() {
     setError(null);
     setResult(null);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/run", inputs);
+      const response = await axios.post(`http://${config.backtestApiUrl}/run`, inputs);
       setResult(response.data);
     } catch (err) {
       setError("Failed to fetch data. Please check the server or your inputs.");

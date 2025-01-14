@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Container, Typography, Box, Grid, Paper } from "@mui/material";
-import CandlestickChart from "../components/LightChart";
 import { useNavigate, useParams } from "react-router-dom";
+
+import CandlestickChart from "../components/LightChart";
+import config from "../config/apiConfig";
 
 const Stocks = () => {
     const { stockSymbol } = useParams();
@@ -10,7 +12,7 @@ const Stocks = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const response = await fetch(`http://localhost:8000/stocks/${stockSymbol}`);
+				const response = await fetch(`http://${config.stocksApiUrl}/stocks/${stockSymbol}`);
 				const data = await response.json();
 				setChartData(data.data);
 			} catch (error) {

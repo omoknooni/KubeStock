@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Container, Typography, Box, Grid, Paper } from "@mui/material";
 import { useParams } from "react-router-dom";
 
+import config from "../config/apiConfig";
+
 const Equity = ({data}) => {
     return (
         <Box mt={4}>
@@ -110,7 +112,7 @@ const StockInfo = () => {
   useEffect(() => {
     const fetchStockInfoData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/stocks/${stockSymbol}/info`);
+        const response = await fetch(`http://${config.stocksApiUrl}/stocks/${stockSymbol}/info`);
         const data = await response.json();
         setStockInfoData(data);
       } catch (error) {
