@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: stock-service
-  label:
-    app: stock-service
+  name: stocks-service
+  labels:
+    app: stocks-service
 spec:
   type: ClusterIP
   ports:
@@ -11,4 +11,4 @@ spec:
       protocol: TCP
       targetPort: 8000
   selector:
-    app: stock
+    app: stocks
