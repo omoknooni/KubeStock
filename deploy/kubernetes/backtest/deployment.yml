@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backtest-deployment
+  labels:
+    app: backtest
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backtest
+  template:
+    metadata:
+      labels:
+        app: backtest
+    spec:
+      containers:
+      - name: backtest
+        image: omoknooni/kubestock-backtest:latest
+        ports:
+        - containerPort: 8001

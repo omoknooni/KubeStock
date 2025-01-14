@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backtest-service
+  labels:
+    app: backtest
+spec:
+  type: ClusterIP
+  selector:
+    labels:
+      app: backtest
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8001
