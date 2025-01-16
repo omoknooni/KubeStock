@@ -1,32 +1,63 @@
+from functools import lru_cache
+from datetime import datetime, timedelta
 import yfinance as yf
-import pprint
 import aiohttp
 import os
+import time
 
+from dotenv import load_dotenv
+load_dotenv()
 API_KEY = os.getenv("STOCK_API_KEY")
 BASE_URL = "https://www.alphavantage.co/query"
 
+# Simple Cache wrapper with timeout
+# TODO : Redis같은 캐시처리
+def timed_lru_cache(seconds: int, maxsize: int = 128):
+    def wrapper_decorator(func):
+        func = lru_cache(maxsize=maxsize)(func)
+        func.lifetime = seconds
+        func.expiration = time.time() + seconds
+
+        def wrapped_func(*args, **kwargs):
+            if time.time() > func.expiration:
+                func.cache_clear()
+                func.expiration = time.time() + func.lifetime
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_decorator
+
+@timed_lru_cache(seconds=60, maxsize=128)
 async def fetch_stock_data(symbol: str) -> dict:
     """
     주어진 종목(Symbol)의 데이터를 Alpha Vantage API에서 가져옴
     """
     params = {
         "function": "TIME_SERIES_INTRADAY",
-        "symbol": symbol,
-        "interval": "1min",
+        "symbol": symbol.upper().strip(),
+        "interval": "5min",
         "apikey": API_KEY
     }
+
+    if any(value is None for value in params.values()):
+        raise ValueError(f"Invalid parameters provided.")
+
     async with aiohttp.ClientSession() as session:
         async with session.get(BASE_URL, params=params) as response:
-            if response.status == 200:
-                raw_data = await response.json()
-                print(raw_data)
-                # API 제한 메시지 : {'Information': 'Thank you for using Alpha Vantage! Our standard API rate limit is 25 requests per day. Please subscribe to any of the premium plans at https://www.alphavantage.co/premium/ to instantly remove all daily rate limits.'}
-                if "Information" in raw_data:
-                    raise ValueError(f"API 제한 메시지: {raw_data['Information']}")
+            if response.status != 200:
+                raise ValueError(f"Failed to fetch data. Status code: {response.status}")
+            raw_data = await response.json()
 
-                time_series = raw_data.get("data").get("Time Series (1min)")
 
+            # API 제한 메시지 : {'Information': 'Thank you for using Alpha Vantage! Our standard API rate limit is 25 requests per day. Please subscribe to any of the premium plans at https://www.alphavantage.co/premium/ to instantly remove all daily rate limits.'}
+            if "Information" in raw_data:
+                raise ValueError(f"API 제한 메시지: {raw_data['Information']}")
+
+
+            try:
+                time_series = raw_data.get("Time Series (1min)")
+                
                 processed_data = [
                     {
                         "time": timestamp,  # ISO 8601 문자열 그대로 전달
@@ -38,9 +69,11 @@ async def fetch_stock_data(symbol: str) -> dict:
                     for timestamp, values in time_series.items()
                 ]
 
-                return processed_data
-            else:
-                raise ValueError(f"Failed to fetch data. Status code: {response.status}")
+                return processed_data if processed_data else None
+            except aiohttp.ClientError as ce:
+                raise ValueError(f"Network Error: {str(ce)}")
+            except (ValueError, KeyError, TypeError) as e:
+                raise ValueError(f"Error processing data: {str(e)}")
 
 
 def fetch_stock_info(symbol: str):

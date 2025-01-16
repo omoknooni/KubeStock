@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from app.services.stock_data import fetch_stock_data, fetch_stock_info
 
 router = APIRouter(prefix="/stocks", tags=["Stocks"])
@@ -22,10 +22,14 @@ async def get_stock_data(symbol: str):
                 detail=f"No data found for symbol: {symbol}"
             )
             
-        return {"symbol": symbol, "data": stock_data}
+        return {"status":"success", "symbol": symbol, "data": stock_data}
         
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions as-is
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS if "API 제한" in str(ve)
+            else status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching data: {str(e)}")
 
