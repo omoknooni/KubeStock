@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Typography, Box, Grid, Paper } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -8,27 +8,38 @@ import config from "../config/apiConfig";
 const Stocks = () => {
     const { stockSymbol } = useParams();
     const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${config.stocksApiUrl}/stocks/${stockSymbol}`);
+            const data = await response.json();
+            setChartData(data.data);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [stockSymbol]);
 
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const response = await fetch(`http://${config.stocksApiUrl}/stocks/${stockSymbol}`);
-				const data = await response.json();
-				setChartData(data.data);
-			} catch (error) {
-				console.error("Error fetching data:", error);
-			}
-		};
-
 		fetchData();
-	}, [stockSymbol]);
+	}, [fetchData]);
 				
     const navigate = useNavigate();
     const handleClick = () => {
         navigate(`/stocks/${stockSymbol}/info`);
     };
     
-	return (
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    if (!chartData) {
+        return <div>No data available</div>;
+    }
+
+	return loading ? <div>Loading...</div>: (
     <Container maxWidth="lg">
         {/* Head */}
         <Box mt={4}>

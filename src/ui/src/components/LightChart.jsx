@@ -31,17 +31,24 @@ const CandlestickChart = ({ data, width = 600, height = 400 }) => {
       },
       timeScale: {
         borderColor: '#ccc',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      localization: {
+        locale: 'ko-KR',
+        dateFormat: 'yyyy-MM-dd',
+        timeFormatter: (timestamp) => new Date(timestamp * 1000).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),   // crossline의 시간 표현
       },
     });
 
     // Add candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#4caf50',
-      downColor: '#f44336',
-      borderUpColor: '#4caf50',
-      borderDownColor: '#f44336',
-      wickUpColor: '#4caf50',
-      wickDownColor: '#f44336',
+      upColor: '#f44336',
+      downColor: '#0033ff',
+      borderUpColor: '#f44336',
+      borderDownColor: '#0033ff',
+      wickUpColor: '#f44336',
+      wickDownColor: '#0033ff',
     });
 
     candlestickSeries.setData(data);

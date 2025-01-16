@@ -49,7 +49,7 @@ function Backtest() {
     setError(null);
     setResult(null);
     try {
-      const response = await axios.post(`http://${config.backtestApiUrl}/run`, inputs);
+      const response = await axios.post(`${config.backtestApiUrl}/run`, inputs);
       setResult(response.data);
     } catch (err) {
       setError("Failed to fetch data. Please check the server or your inputs.");

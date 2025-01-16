@@ -1,13 +1,13 @@
-const env = process.env.NODE_ENV || "dev"
+const env = process.env.NODE_ENV
 
 const config = {
-    dev: {
-        stocksApiUrl: process.env.STOCKS_API_URL || "http://localhost:8000",
-        backtestApiUrl: process.env.BACKTEST_API_URL || "http://localhost:8001",
+    development: {
+        stocksApiUrl: process.env.REACT_APP_STOCKS_API_URL || "http://localhost:8000",
+        backtestApiUrl: process.env.REACT_APP_BACKTEST_API_URL || "http://localhost:8001",
     },
-    prod: {
-        stocksApiUrl: process.env.STOCKS_API_URL || "http://stocks",
-        backtestApiUrl: process.env.BACKTEST_API_URL || "http://backtest",
+    production: {
+        stocksApiUrl: process.env.REACT_APP_STOCKS_API_URL || "http://stocks",
+        backtestApiUrl: process.env.REACT_APP_BACKTEST_API_URL || "http://backtest",
     }
 }
 
