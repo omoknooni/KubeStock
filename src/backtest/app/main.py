@@ -11,6 +11,7 @@ app = FastAPI(title="Stock Backtesting Service", version="1.0")
 origins = [
     'http://localhost',
     'http://localhost:3000',
+    'http://ui-service'
 ]
 app.add_middleware(
     CORSMiddleware,
