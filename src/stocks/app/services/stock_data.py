@@ -1,5 +1,5 @@
 from functools import lru_cache
-from datetime import datetime, timedelta
+from datetime import datetime
 import yfinance as yf
 import aiohttp
 import os
@@ -32,6 +32,7 @@ def timed_lru_cache(seconds: int, maxsize: int = 128):
 async def fetch_stock_data(symbol: str) -> dict:
     """
     주어진 종목(Symbol)의 데이터를 Alpha Vantage API에서 가져옴
+    API Docs : https://www.alphavantage.co/documentation/
     """
     params = {
         "function": "TIME_SERIES_INTRADAY",
@@ -56,17 +57,17 @@ async def fetch_stock_data(symbol: str) -> dict:
 
 
             try:
-                time_series = raw_data.get("Time Series (1min)")
+                time_series = raw_data.get(f"Time Series ({params['interval']})")
                 
                 processed_data = [
                     {
-                        "time": timestamp,  # ISO 8601 문자열 그대로 전달
+                        "time": int(time.mktime(datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").timetuple())),  # convert to unix timestamp
                         "open": float(values["1. open"]),
                         "high": float(values["2. high"]),
                         "low": float(values["3. low"]),
                         "close": float(values["4. close"])
                     }
-                    for timestamp, values in time_series.items()
+                    for timestamp, values in sorted(time_series.items())
                 ]
 
                 return processed_data if processed_data else None
