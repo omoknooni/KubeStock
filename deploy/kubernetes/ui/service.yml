@@ -5,7 +5,7 @@ metadata:
   labels:
     app: ui
 spec:
-  type: LoadBalancer  # need to expose externally
+  type: ClusterIP
   ports:
     - port: 80
       protocol: TCP

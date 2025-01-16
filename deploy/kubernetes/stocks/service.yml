@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: stocks-service
   labels:
-    app: stocks-service
+    app: stocks
 spec:
   type: ClusterIP
   ports:
