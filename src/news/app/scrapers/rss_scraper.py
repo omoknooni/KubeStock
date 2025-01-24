@@ -13,7 +13,6 @@ DB_CONFIG = {
     'user': os.environ['DB_USER'],
     'password': os.environ['DB_PASSWORD'],
     'database': os.environ['DB_NAME'],
-    'port': int(os.environ['DB_PORT'])
 }
 
 
