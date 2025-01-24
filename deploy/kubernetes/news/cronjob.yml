@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rss-scraper
+spec:
+  schedule: "*/10 * * * *"  # Scraping Interval
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: scraper
+            image: omoknooni/kubestock-scraper:latest
+            envFrom:
+            - secretRef:
+                name: news-secret
+          restartPolicy: OnFailure
