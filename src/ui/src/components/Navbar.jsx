@@ -27,26 +27,14 @@ const Navbar = ({ onSearch }) => {
 
   return (
     <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
-      <Toolbar>
-        {/* 메뉴 아이콘 */}
-        <IconButton
-          size="large"
-          edge="start"
-          color="inherit"
-          aria-label="menu"
-          onClick={handleMenuOpen}
-          sx={{ mr: 2 }}
-        >
-          <MenuIcon />
-        </IconButton>
-
+      <Toolbar sx={{ display: "flex", justifyContent: "center" }}>
         {/* 로고 또는 타이틀 */}
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" sx={{ position: "fixed", left: "20px" }}>
           🏗 KubeStock
         </Typography>
 
         {/* 메뉴 버튼 */}
-        <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
+        <Box sx={{ display: { xs: 'none', sm: 'flex', marginRight: "1vh" } }}>
           <IconButton color="inherit" onClick={() => navigate('/')}>
             Home
           </IconButton>
