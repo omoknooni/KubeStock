@@ -1,95 +1,129 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Container, Typography, Box, Grid, Paper } from "@mui/material";
+import React, { useEffect, useRef } from "react";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
-
-import CandlestickChart from "../components/LightChart";
-import config from "../config/apiConfig";
 
 const Stocks = () => {
     const { stockSymbol } = useParams();
-    const [chartData, setChartData] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const chartRef = useRef(null);
+    const symbolInfoRef = useRef(null);
+    const technicalAnalysisRef = useRef(null);
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${config.stocksApiUrl}/stocks/${stockSymbol}`);
-            const data = await response.json();
-            setChartData(data.data);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false);
-        }
-    }, [stockSymbol]);
-
-	useEffect(() => {
-		fetchData();
-	}, [fetchData]);
-				
     const navigate = useNavigate();
     const handleClick = () => {
         navigate(`/stocks/${stockSymbol}/info`);
     };
     
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-    if (!chartData) {
-        return <div>No data available</div>;
-    }
+    useEffect(() => {
+        document.title = `${stockSymbol} | KubeStock`;
+        const removeOldWidgets = () => {
+            const chartContainer = chartRef.current;
+            const symbolInfoContainer = symbolInfoRef.current;
+            const technicalAnalysisContainer = technicalAnalysisRef.current;
 
-	return loading ? <div>Loading...</div>: (
-    <Container maxWidth="lg">
-        {/* Head */}
-        <Box mt={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-            {stockSymbol || "Stock"}
-        </Typography>
-        <Typography variant="h6" gutterBottom fontStyle={{ color: 'gray' }}>
-            {stockSymbol || "Stock"}
-        </Typography>
-        </Box>
+            if (chartContainer) {
+                chartContainer.innerHTML = "";
+            }
+            if (symbolInfoContainer) {
+                symbolInfoContainer.innerHTML = "";
+            }
+            if (technicalAnalysisContainer) {
+                technicalAnalysisContainer.innerHTML = "";
+            }
+        };
+        removeOldWidgets();
+        
+        // Symbol Info Widget
+        const symbolInfoWidget = document.createElement("script");
+        symbolInfoWidget.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js";
+        symbolInfoWidget.async = true;
+        symbolInfoWidget.innerHTML = JSON.stringify({
+            symbol: stockSymbol || "NASDAQ:AAPL",
+            width: "100%",
+            locale: "kr",
+            colorTheme: "light",
+            isTransparent: false,
+            height: 200,
+        });
+        symbolInfoRef.current.appendChild(symbolInfoWidget);
 
-        {/* Main Content */}
-        <Box mt={4}>
-        <Paper elevation={3} sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom>
-            Candlestick Chart for {stockSymbol || "Stock"}
+        // Advanced Real-time Chart Widget
+        const ARTchartWidget = document.createElement("script");
+        ARTchartWidget.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+        ARTchartWidget.async = true;
+        ARTchartWidget.innerHTML = JSON.stringify({
+            autosize: true,
+            symbol: stockSymbol || "NASDAQ:AAPL",
+            interval: "D",
+            timezone: "Etc/UTC",
+            theme: "light",
+            style: "1",
+            locale: "kr",
+            toolbar_bg: "#f1f3f6",
+            height: 600,
+            enable_publishing: false,
+            hide_side_toolbar: false,
+            allow_symbol_change: true,
+            details: true,
+            hotlist: true,
+            calendar: true,
+        });
+        chartRef.current.appendChild(ARTchartWidget);
+
+        // Technicl Analysis Widget
+        const TechnicalAnalysisWidget = document.createElement("script");
+        TechnicalAnalysisWidget.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
+        TechnicalAnalysisWidget.async = true;
+        TechnicalAnalysisWidget.innerHTML = JSON.stringify({
+            interval: "1D",
+            width: "100%",
+            isTransparent: false,
+            height: 400,
+            symbol: stockSymbol || "NASDAQ:AAPL",
+            showIntervalTabs: true,
+            locale: "kr",
+            colorTheme: "light",
+        });
+        technicalAnalysisRef.current.appendChild(TechnicalAnalysisWidget);
+    }, [stockSymbol]);
+
+	return (
+    <Box sx={{ padding: 2, backgroundColor: "#f4f6f8", minHeight: "100vh" }}>
+        {/* Symbol Info Widget */}
+        <Card sx={{ marginBottom: 2 }}>
+          <CardContent>
+            <div className="tradingview-widget-container" ref={symbolInfoRef} style={{ height: "100%", width: "100%" }}>
+                <div className="tradingview-widget-container__widget" style={{ width: "100%" }}></div>
+                <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span className="blue-text">Track all markets on TradingView</span></a></div>
+            </div>
+          </CardContent>
+        </Card>
+  
+        {/* Advanced Real-Time Chart */}
+        <Card sx={{ flexGrow: 1, marginBottom: 2 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Real-Time Chart
             </Typography>
-            <Typography variant="body1" color="text.secondary" gutterBottom>
-            Below is a candlestick chart showcasing stock performance over time.
+            <div className="tradingview-widget-container" ref={chartRef} style={{ height: "100%", width: "100%" }}>
+                <div className="tradingview-widget-container__widget" style={{ width: "100%" }}></div>
+                <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span className="blue-text">Track all markets on TradingView</span></a></div>
+            </div>
+          </CardContent>
+        </Card>
+  
+        {/* Technical Analysis Widget */}
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Technical Analysis
             </Typography>
-            <CandlestickChart data={chartData} width={800} height={400} />
-        </Paper>
-        </Box>
-
-        {/* Additional Information */}
-        <Box mt={4}>
-        <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 3, cursor: 'pointer' }} onClick={handleClick}>
-                <Typography variant="h6" gutterBottom>
-                종목 정보
-                </Typography>
-                <Typography variant="body2" color="text.secondary" fontSize={{ color: 'gray'}}>
-                해당 종목의 정보를 확인
-                </Typography>
-            </Paper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                Latest News
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                Stay updated with the latest trends and news in the stock market.
-                </Typography>
-            </Paper>
-            </Grid>
-        </Grid>
-        </Box>
-  </Container>
+            <div className="tradingview-widget-container" ref={technicalAnalysisRef} style={{ height: "100%", width: "100%" }}>
+                <div className="tradingview-widget-container__widget" style={{ width: "100%" }}></div>
+                <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span className="blue-text">Track all markets on TradingView</span></a></div>
+            </div>
+          </CardContent>
+        </Card>
+    </Box>
   );
 };
 

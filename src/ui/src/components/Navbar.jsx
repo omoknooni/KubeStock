@@ -42,7 +42,7 @@ const Navbar = ({ onSearch }) => {
 
         {/* 로고 또는 타이틀 */}
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Trading Dashboard
+          🏗 KubeStock
         </Typography>
 
         {/* 메뉴 버튼 */}
