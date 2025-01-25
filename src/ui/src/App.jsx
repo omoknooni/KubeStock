@@ -7,6 +7,7 @@ import Stocks from "./pages/Stocks";
 import StockInfo from "./pages/StockInfo";
 import News from "./pages/News";
 import Backtest from "./pages/BackTest";
+import TickerTape from "./components/TickerTape";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/news" element={<News />} />
         <Route path="/backtest" element={<Backtest />} />
       </Routes>
+      <TickerTape />
     </Router>
   );
 };
