@@ -1,7 +1,7 @@
 # KubeStock
 
 ## Service Architecture
-![service_architecture.png](./img/20250116_191827.png)
+![service_architecture.png](./img/20250126_001608.png)
 
 ## Service List
 ### Live Stock info
