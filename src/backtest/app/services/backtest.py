@@ -1,33 +1,93 @@
+from typing import List, Dict
+from pydantic import BaseModel
+from collections import defaultdict
+import pandas as pd
+import yfinance as yf
 import backtrader as bt
+import logging
+import traceback
 
-# make class for Simple Moving Average Strategy
+logger = logging.getLogger('uvicorn.error')
+logger.setLevel(logging.DEBUG)
+
+# --- Input Data Schema ---
+class PortfolioItem(BaseModel):
+    ticker: str
+    weight: float
+
+class BacktestRequest(BaseModel):
+    start_date: str
+    end_date: str
+    initial_capital: float
+    cashflow: float
+    cashflow_freq: str  # e.g., "monthly"
+    portfolio: List[PortfolioItem]
+
+
+# --- Backtrader Strategy ---
 class SimpleMovingAverage(bt.Strategy):
     """
     A simple moving average strategy for backtesting.
     """
-    params = (('sma_period', 20),)
+    params = (
+        ('sma_short_period', 20),
+        ('sma_long_period', 50),
+        ('cashflow', 0),
+        ('cashflow_freq', "monthly")
+    )
+
+    def log(self, txt, dt=None):
+        """
+        Logging function for the strategy.
+        """
+        dt = dt or self.datas[0].datetime.date(0).isoformat()
+        logger.info('%s, %s', dt, txt)
 
     def __init__(self):
         """
         Initialize the strategy by creating a moving average indicator.
         """
-        self.sma = bt.indicators.SimpleMovingAverage(
-            self.data.close, period=self.params.sma_period)
+        self.sma_short = {}
+        self.sma_long = {}
+        self.portfolio_value = []
+        self.counter = 0
+        self.dataclose = self.datas[0].close
+
+        for data in self.datas:
+            self.sma_short[data] = bt.indicators.SimpleMovingAverage(data.close, period=self.params.sma_short_period)
+            self.sma_long[data] = bt.indicators.SimpleMovingAverage(data.close, period=self.params.sma_long_period)
 
     def next(self):
         """
         Execute the strategy logic for each trading day.
         """
-        if self.position.size == 0:
-            # Buy if the closing price is above the moving average
-            if self.data.close[0] > self.sma[0]:
-                self.buy()
-        else:
-            # Sell if the closing price is below the moving average
-            if self.data.close[0] < self.sma[0]:
-                self.sell()
+        self.portfolio_value.append((self.datetime.date(0).isoformat(), self.broker.getvalue()))
+        
+        # Cashflow injection logic (monthly or yearly)
+        if self.params.cashflow > 0 and self.params.cashflow_freq == "monthly":
+            if self.counter % 20 == 0:  # Roughly once a month (20 trading days)
+                self.broker.add_cash(self.params.cashflow)
+        self.counter += 1
+        
+        # run SMA Strategy
+        for data in self.datas:
+            ticker = data._name
+            pos = self.getposition(data).size
 
-# make class for RSI Strategy
+            sma_short = self.sma_short[data][0]
+            sma_long = self.sma_long[data][0]
+
+            # Buy if short SMA crosses above long SMA
+            if sma_short > sma_long and pos == 0:
+                cash_available = self.broker.get_cash()
+                size = cash_available / len(self.datas) / data.close[0]
+                self.buy(data=data, size=size)
+
+            # Sell if short SMA crosses below long SMA
+            elif sma_short < sma_long and pos > 0:
+                self.sell(data=data, size=pos)
+        self.log(f"Portfolio Value: {self.broker.getvalue():.2f}, Pos: {pos}, Close: {self.dataclose[0]}")
+
 class RSI(bt.Strategy):
     """
     A relative strength index (RSI) strategy for backtesting.
@@ -53,79 +113,88 @@ class RSI(bt.Strategy):
             if self.rsi[0] > self.params.rsi_upper:
                 self.sell()
 
-def run(params):
-    """
-    Run a backtest with the given parameters.
 
-    Args:
-        params (dict): A dictionary containing the following keys:
-            - strategy (str): The backtrader strategy to be tested.
-            - ticker (str) : The ticker of the backtest.
-            - initial_cash (float): The initial cash for the backtest.
-            - start_date (datetime) : The start date of backtesting
-            - end_date (datetime) : The end date of backtesting
-            - commission (float): The commission for the backtest.
+# --- Helper Functions ---
+def fetch_data(ticker: str, start: str, end: str):
+    try:
+        # Download data from yfinance
+        # yfinance module Version Issue : use "0.2.43"
+        df = yf.download(ticker, start=start, end=end)
 
-    Returns:
-        backtesting_result (dict)
-    """
-    # Create a backtrader Cerebro instance
+        df.rename(columns={
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Volume": "volume",
+        }, inplace=True)
+
+        if df.empty:
+            raise ValueError(f"No data found for ticker {ticker} in the given date range.")
+        # Convert to Backtrader data feed
+        data = bt.feeds.PandasData(dataname=df)
+        return data
+    except Exception as e:
+        raise ValueError(f"Error fetching data for {ticker}: {e}")
+
+
+def calculate_annual_returns(portfolio_values):
+    """Calculate annual returns from daily portfolio values."""
+
+    # Create a dictionary to track yearly values
+    yearly_returns = defaultdict(list)
+    for date, value in portfolio_values:
+        year = pd.to_datetime(date).year
+        yearly_returns[year].append(value)
+
+    annual_returns = []
+    for year, values in yearly_returns.items():
+        start_value = values[0]
+        end_value = values[-1]
+        annual_return = ((end_value / start_value) - 1) * 100
+        annual_returns.append({"year": year, "return": annual_return})
+    return annual_returns
+
+def run_backtest(params: BacktestRequest):
     cerebro = bt.Cerebro()
 
-    if params['strategy'] == 'sma':
-        strategy = SimpleMovingAverage
-    elif params['strategy'] == 'rsi':
-        strategy = RSI
+    # Add strategy with parameters
+    # strategy = PortfolioStrategy
+    # cerebro.addstrategy(strategy, cashflow=params.cashflow, cashflow_freq=params.cashflow_freq)
 
+    strategy = SimpleMovingAverage
+    cerebro.addstrategy(strategy, cashflow=params.cashflow, cashflow_freq=params.cashflow_freq)
 
-    # Add the strategy to the Cerebro instance
-    cerebro.addstrategy(params['strategy'])
+    # Add data feeds
+    logger.debug("Add data feeds")
+    for item in params.portfolio:
+        try:
+            data = fetch_data(item.ticker, params.start_date, params.end_date)
+            cerebro.adddata(data, name=item.ticker)
+        except ValueError as e:
+            logger.debug(f"Failed to add data for ticker {item.ticker}: {e}")
+            raise ValueError(f"Failed to add data for ticker {item.ticker}: {e}")
 
-    # data feed를 위한 fetch 작업
-
-    # Create a backtrader Data Feed instance
-    data = bt.feeds.YahooFinanceData(
-        dataname=params['ticker'],
-        fromdate=params['start_date'],
-        todate=params['end_date'],
-        reverse=False
-    )
-
-    # Add the Data Feed to the Cerebro instance
-    cerebro.adddata(data)
-
-    # Set the initial cash for the backtest -> 초기 자본금
-    cerebro.broker.setcash(params['initial_cash'])
-
-    # Set the commission for the backtest -> 거래 수수료
-    cerebro.broker.setcommission(commission=params['commission'], margin=params['margin'])
-
-    # Add the analyzers to the Cerebro instance -> 결과 분석과 통계를 제공하는 구성요소
-    # Sharp Ratio : 위험 대비 수익률
-    # Draw Down : 포폴의 최대 손실 (최대 낙폭)
-    # Trade Analyzer : 거래 요약 (승/패 거래 수, 평균 수익 등)
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe_ratio')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='draw_down')
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trade_analyzer')
+    # Set initial capital and commission
+    logger.debug("Set initial capital and commission")
+    cerebro.broker.setcash(params.initial_capital)
+    cerebro.broker.setcommission(commission=0.001)
 
     # Run the backtest
-    backtest_result = cerebro.run()
+    logger.debug("Run the backtest")
+    try:
+        results = cerebro.run()
+    except Exception as e:
+        logger.debug(f"Error during backtest: {e}")
+        logger.debug(traceback.format_exc())
+        raise ValueError(f"Error during backtest: {e}")
+    strategy_instance = results[0]  # Get the first strategy instance
 
-    # Return the backtest result
+    # Extract portfolio performance data
+    performance = strategy_instance.portfolio_value
+    annual_returns = calculate_annual_returns(performance)
+
     return {
-        'ticker': params['ticker'],
-        'strategy': params['strategy'],
-        'initial_cash': params['initial_cash'],
-        'commission': params['commission'],
-        'start_date': params['start_date'],
-        'end_date': params['end_date'],
-        'sharpe_ratio': backtest_result[0].analyzers.sharpe_ratio.get_analysis()['sharperatio'],
-        'max_draw_down': backtest_result[0].analyzers.draw_down.get_analysis()['max']['drawdown'],
-        'total_return': backtest_result[0].analyzers.trade_analyzer.get_analysis()['total']['total'],
-        'winning_trades': backtest_result[0].analyzers.trade_analyzer.get_analysis()['won']['total'],
-        'losing_trades': backtest_result[0].analyzers.trade_analyzer.get_analysis()['lost']['total'],
-        'average_winning_trade': backtest_result[0].analyzers.trade_analyzer.get_analysis()['won']['pnl']['average'],
-        'average_losing_trade': backtest_result[0].analyzers.trade_analyzer.get_analysis()['lost']['pnl']['average'],
-        'final_portfolio_value': cerebro.broker.getvalue()
+        "performance": performance,  # List of (date, value)
+        "annual_returns": annual_returns  # List of {"year": int, "return": float}
     }
-    
