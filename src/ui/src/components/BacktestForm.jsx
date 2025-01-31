@@ -23,7 +23,7 @@ const BacktestForm = ({ onSubmit }) => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, margin: "auto", mt: 4 }}>
       <Card sx={{ flexGrow: 1, marginBottom: 2 }}>
         <CardContent>
-          <Typography variant="h5" component="div">
+          <Typography variant="h4" component="div">
             Welcome to Backtest!
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -74,7 +74,7 @@ const BacktestForm = ({ onSubmit }) => {
 
       {/* 포트폴리오 구성 */}
       <Card sx={{ padding: 2, flexGrow: 1, marginBottom: 2 }}>
-        <Typography variant="h6">Portfolio</Typography>
+        <Typography variant="h5">Portfolio</Typography>
         <CardContent>
           <div>
             {params.portfolio.map((item, index) => (

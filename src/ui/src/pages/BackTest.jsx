@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import BacktestForm from "../components/BacktestForm";
 import PerformanceChart from "../components/PerformanceChart";
+import DrawdownChart from "../components/DrawdownChart";
 import apiConfig from "../config/apiConfig";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 
@@ -28,7 +29,9 @@ const BacktestPage = () => {
   return (
     <div>
       <BacktestForm onSubmit={handleBacktest} />
+      {/* TODO: 여러 포트폴리오 출력 */}
       {data && <PerformanceChart performance={data.performance} annual_returns={data.annual_returns} />}
+      {data && <DrawdownChart drawdown={data.drawdown} />}
 
       {/* 🔹 오류 발생 시 경고 모달 */}
       <Dialog open={!!error} onClose={() => setError(null)}>

@@ -13,13 +13,13 @@ const PerformanceChart = ({ performance, annual_returns }) => {
           <div style={{ height: 600 }}>
             <ResponsiveLine
               data={chartData}
-              margin={{ top: 50, right: 50, bottom: 50, left: 60 }}
+              margin={{ top: 20, right: 50, bottom: 50, left: 60 }}
               xScale={{ type: "time", format:"%Y-%m-%d" }}
               yScale={{ type: "linear", min: "auto", max: "auto" }}
               xFormat="time:%Y-%m-%d"
               yFormat=" >-.2f"
-              axisBottom={{ legend: "Date", format: "%Y-%m-%d", legendOffset: 50, legendPosition: "middle" }}
-              axisLeft={{ legend: "Portfolio Value", legendOffset: -40, legendPosition: "middle" }}
+              axisBottom={{ legend: "Date", format: "%Y-%m-%d", legendOffset: 30, legendPosition: "middle" }}
+              axisLeft={{ legend: "Portfolio Value", legendOffset: -50, legendPosition: "middle" }}
               colors={{ scheme: "category10" }}
               lineWidth={2}
               pointSize={6}
@@ -57,11 +57,8 @@ const PerformanceChart = ({ performance, annual_returns }) => {
         </CardContent>
       </Card>
 
-      {/* Drawdown */}
-
-
       {/* 연도별 수익률 표 */}
-      <Card sx={{ marginBottom: 5 }}>
+      <Card sx={{ marginBottom: 1 }}>
         <Box sx={{ padding: 1 }}>
           <Typography variant="h5">Annual Returns</Typography>
         </Box>
