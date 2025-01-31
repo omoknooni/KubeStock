@@ -12,9 +12,11 @@ logger.setLevel(logging.DEBUG)
 
 # --- Input Data Schema ---
 class PortfolioItem(BaseModel):
-    ticker: str
-    weight: float
-
+    name: str
+    allocation: Dict[str, float]  # e.g., {"AAPL": 50, "GOOGL": 50} => sum must be 100
+    drag: float
+    invest_dividends: bool
+    rebalance_freq: str  # e.g., "monthly / yearly"
 class BacktestRequest(BaseModel):
     start_date: str
     end_date: str
@@ -69,6 +71,10 @@ class SimpleMovingAverage(bt.Strategy):
         drawdown_analyzer = self.analyzers.drawdown.get_analysis()
         drawdown_value = drawdown_analyzer.drawdown if "drawdown" in drawdown_analyzer else 0
         
+        # 계좌잔고와 drawdown_value는 소수점 둘째 자리까지만
+        portfolio_value = round(portfolio_value, 2)
+        drawdown_value = round(drawdown_value, 2)
+
         self.portfolio_value.append((date, portfolio_value))
         self.drawdowns.append((date, drawdown_value))
 
@@ -164,7 +170,14 @@ def calculate_annual_returns(portfolio_values):
         annual_returns.append({"year": year, "return": annual_return})
     return annual_returns
 
-def run_backtest(params: BacktestRequest):
+def run_backtest(
+        start_date: str,
+        end_date: str,
+        initial_capital: float,
+        cashflow: float,
+        cashflow_freq: str,
+        portfolio: List[PortfolioItem],
+):
     cerebro = bt.Cerebro()
 
     # Add strategy with parameters
@@ -172,21 +185,21 @@ def run_backtest(params: BacktestRequest):
     # cerebro.addstrategy(strategy, cashflow=params.cashflow, cashflow_freq=params.cashflow_freq)
 
     strategy = SimpleMovingAverage
-    cerebro.addstrategy(strategy, cashflow=params.cashflow, cashflow_freq=params.cashflow_freq)
+    cerebro.addstrategy(strategy, cashflow=cashflow, cashflow_freq=cashflow_freq)
 
     # Add data feeds
     logger.debug("Add data feeds")
-    for item in params.portfolio:
+    for item in portfolio.allocation:
         try:
-            data = fetch_data(item.ticker, params.start_date, params.end_date)
-            cerebro.adddata(data, name=item.ticker)
+            data = fetch_data(item, start_date, end_date)
+            cerebro.adddata(data, name=item)
         except ValueError as e:
-            logger.debug(f"Failed to add data for ticker {item.ticker}: {e}")
-            raise ValueError(f"Failed to add data for ticker {item.ticker}: {e}")
+            logger.debug(f"Failed to add data for ticker {item}: {e}")
+            raise ValueError(f"Failed to add data for ticker {item}: {e}")
 
     # Set initial capital and commission
     logger.debug("Set initial capital and commission")
-    cerebro.broker.setcash(params.initial_capital)
+    cerebro.broker.setcash(initial_capital)
     cerebro.broker.setcommission(commission=0.001)
 
     # Set drawdown analyzer
@@ -203,12 +216,14 @@ def run_backtest(params: BacktestRequest):
     strategy_instance = results[0]  # Get the first strategy instance
 
     # Extract portfolio performance data
-    performance = strategy_instance.portfolio_value
-    drawdown = strategy_instance.drawdowns
-    annual_returns = calculate_annual_returns(performance)
+    date, performance = zip(*strategy_instance.portfolio_value)
+    drawdown = [dd for _,dd in strategy_instance.drawdowns]
+    annual_returns = calculate_annual_returns(strategy_instance.portfolio_value)
 
     return {
-        "performance": performance,  # List of (date, value)
-        "drawdown": drawdown,  # List of (date, value)
+        "name": portfolio.name,
+        "date": list(date),
+        "performance": list(performance),
+        "drawdown": list(drawdown),
         "annual_returns": annual_returns  # List of {"year": int, "return": float}
     }
