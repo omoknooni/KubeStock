@@ -50,6 +50,7 @@ class SimpleMovingAverage(bt.Strategy):
         self.sma_short = {}
         self.sma_long = {}
         self.portfolio_value = []
+        self.drawdowns = []
         self.counter = 0
         self.dataclose = self.datas[0].close
 
@@ -61,8 +62,16 @@ class SimpleMovingAverage(bt.Strategy):
         """
         Execute the strategy logic for each trading day.
         """
-        self.portfolio_value.append((self.datetime.date(0).isoformat(), self.broker.getvalue()))
+        date = self.datetime.date(0).isoformat()
+        portfolio_value = self.broker.getvalue()
+
+        # drawdown 분석
+        drawdown_analyzer = self.analyzers.drawdown.get_analysis()
+        drawdown_value = drawdown_analyzer.drawdown if "drawdown" in drawdown_analyzer else 0
         
+        self.portfolio_value.append((date, portfolio_value))
+        self.drawdowns.append((date, drawdown_value))
+
         # Cashflow injection logic (monthly or yearly)
         if self.params.cashflow > 0 and self.params.cashflow_freq == "monthly":
             if self.counter % 20 == 0:  # Roughly once a month (20 trading days)
@@ -86,7 +95,7 @@ class SimpleMovingAverage(bt.Strategy):
             # Sell if short SMA crosses below long SMA
             elif sma_short < sma_long and pos > 0:
                 self.sell(data=data, size=pos)
-        self.log(f"Portfolio Value: {self.broker.getvalue():.2f}, Pos: {pos}, Close: {self.dataclose[0]}")
+        self.log(f"Portfolio Value: {self.broker.getvalue():.2f}, Pos: {pos}, Close: {self.dataclose[0]}, Drawdown: {drawdown_value:.2f}")
 
 class RSI(bt.Strategy):
     """
@@ -180,6 +189,9 @@ def run_backtest(params: BacktestRequest):
     cerebro.broker.setcash(params.initial_capital)
     cerebro.broker.setcommission(commission=0.001)
 
+    # Set drawdown analyzer
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+
     # Run the backtest
     logger.debug("Run the backtest")
     try:
@@ -192,9 +204,11 @@ def run_backtest(params: BacktestRequest):
 
     # Extract portfolio performance data
     performance = strategy_instance.portfolio_value
+    drawdown = strategy_instance.drawdowns
     annual_returns = calculate_annual_returns(performance)
 
     return {
         "performance": performance,  # List of (date, value)
+        "drawdown": drawdown,  # List of (date, value)
         "annual_returns": annual_returns  # List of {"year": int, "return": float}
     }

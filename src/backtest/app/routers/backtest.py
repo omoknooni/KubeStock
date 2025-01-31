@@ -15,6 +15,7 @@ async def backtest(params: BacktestRequest):
         result = run_backtest(params)
         return {
             "performance": result["performance"],
+            "drawdown": result["drawdown"],
             "annual_returns": result["annual_returns"]
         }
     except Exception as e:
