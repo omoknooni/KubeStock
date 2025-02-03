@@ -1,6 +1,5 @@
 import React from 'react';
 import MarketStatus from '../components/marketStatus';
-import NewsList from '../components/NewsList';
 import EmbeddedWidget from '../components/TrailingNews';
 import EconomicCalender from '../components/EconomicCalender';
 import Heatmap from '../components/Heatmap';
