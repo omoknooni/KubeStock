@@ -5,6 +5,7 @@ import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import apiConfig from "../config/apiConfig";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -29,8 +30,36 @@ const MarketChip = styled(Chip)(({ theme, marketStatus }) => ({
 const MarketStatus = () => {
   const [currentTime, setCurrentTime] = useState(dayjs().format("HH:mm:ss"));
   const [marketStatus, setMarketStatus] = useState(getMarketStatus());
+  const [error, setError] = useState(null);
+
+  const fetchMarketStatus = async () => {
+    try {
+      const res = await fetch(`${apiConfig.stocksApiUrl}/stocks/market-status`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+
+      const statusMap = {
+        "open": "Market Open",
+        "pre-market": "Pre-Market Closed",
+        "after-hours": "After Market Closed",
+        "closed": "Market Closed"
+      };
+
+      setMarketStatus(statusMap[data.market] || getMarketStatus());
+      setError(null);
+      
+    } catch (err) {
+      setError(err);
+      console.error("Error fetching market status:", err);
+    }
+  };
 
   useEffect(() => {
+    // Initial API Call
+    fetchMarketStatus();
+    
     const timer = setInterval(() => {
       const now = dayjs();
       setCurrentTime(now.format("HH:mm:ss"));
@@ -41,8 +70,17 @@ const MarketStatus = () => {
       }
     }, 1000);
 
-    return () => clearInterval(timer);
+    const apiRefreshInterval = setInterval(() => {
+      fetchMarketStatus();
+    }, 300000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(apiRefreshInterval);
+    };
   }, [marketStatus]);
+
+
   return (
     <Box
       sx={{
@@ -50,7 +88,6 @@ const MarketStatus = () => {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#f5f5f5",
         padding: "20px",
       }}
     >
@@ -69,14 +106,14 @@ const MarketStatus = () => {
         }}
       >
         <Typography variant="h5" gutterBottom>
-          Current Time:
+          Current Time
         </Typography>
         <Typography variant="h4" sx={{ mb: 2, color: "#ff5722" }}>
           {currentTime}
         </Typography>
 
         <Typography variant="h5" gutterBottom>
-          Market Status:
+          Market Status
         </Typography>
         <MarketChip label={marketStatus} marketStatus={marketStatus} />
       </Paper>

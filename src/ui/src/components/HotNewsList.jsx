@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Box, Card, CardContent, CardMedia, Typography, Pagination } from "@mui/material";
 import getRelativeTime from "./util";
+import apiConfig from "../config/apiConfig";
+
 
 const sampleNews = [
   {
@@ -83,8 +85,8 @@ const HotNews =  () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // [type: MAIN] 뉴스만을 가져오는 API 연동
-      // const res = await fetch("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+      // [type: hot] 뉴스만을 가져오는 API 연동
+      // const res = await fetch(`${apiConfig.newsApiUrl}/api/news?type=hot`);
       // const data = await res.json();
       // setNews(data.articles);
       setNews(sampleNews);

@@ -15,7 +15,7 @@ const EconomicCalender = () => {
             isTransparent: false,
             locale: "kr",
             importanceFilter: "-1,0,1",
-            countryFilter: "ar,au,br,ca,cn,fr,de,in,id,it,jp,kr,mx,ru,sa,za,tr,gb,us,eu"
+            countryFilter: "jp,kr,us,eu"
         });
         EconomicCalenderRef.current.appendChild(EconomicCalenderWidget);
     }, []);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Container, Typography, Card, CardMedia, CardContent, Grid, Box, Pagination } from "@mui/material";
+import getRelativeTime from "./util";
 
 const sampleNews = [
   {
@@ -74,22 +75,6 @@ const sampleNews = [
   }
 ];
 
-/** 🕒 상대적 시간 표시 함수 */
-const getRelativeTime = (pubDate) => {
-  const now = new Date();
-  const published = new Date(pubDate);
-  const diffMs = now - published;
-
-  const minutes = Math.floor(diffMs / (1000 * 60));
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (minutes < 1) return "방금 전";
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  return `${days}일 전`;
-};
-
 const ITEMS_PER_PAGE = 5;
 
 const MainNews = () => {
@@ -97,7 +82,15 @@ const MainNews = () => {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    setNews(sampleNews);
+    const fetchData = async () => {
+      // [type: main] 뉴스만을 가져오는 API 연동
+      // const res = await fetch(`${apiConfig.newsApiUrl}/api/news?type=main`);
+      // const data = await res.json();
+      // setNews(data.articles);
+      setNews(sampleNews);
+    };
+
+    fetchData();
   }, []);
 
   const handleChange = (_event, value) => {
