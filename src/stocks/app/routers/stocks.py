@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from app.services.stock_data import fetch_stock_data, fetch_stock_info
+from app.services.market_status import MarketStatusService
+from datetime import datetime
 
 router = APIRouter(prefix="/stocks", tags=["Stocks"])
 
@@ -40,3 +42,16 @@ def get_stock_info(symbol: str):
     """
     info = fetch_stock_info(symbol)
     return info
+
+@router.get("/market-status")
+def get_market_status():
+    """
+    Return market status
+    Check cached data at first, and no data founded, call external API
+    """
+    try:
+        market_service = MarketStatusService()
+        status = market_service.get_market_status()
+        return {"market": status, "status": "success", "time": datetime.now().isoformat()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching market status: {str(e)}")
