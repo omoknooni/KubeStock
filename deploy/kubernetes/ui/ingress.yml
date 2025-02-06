@@ -4,7 +4,7 @@ metadata:
   name: ingress-service
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   rules:
@@ -17,22 +17,22 @@ spec:
                 name: ui-service
                 port:
                   number: 80
-          - path: /api/stocks(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /api/stocks
+            pathType: Prefix
             backend:
               service:
                 name: stocks-service
                 port:
                   number: 80
-          - path: /api/news(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /api/news
+            pathType: Prefix
             backend:
               service:
                 name: news-service
                 port:
                   number: 80
-          - path: /api/backtest(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /api/backtest
+            pathType: Prefix
             backend:
               service:
                 name: backtest-service
