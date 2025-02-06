@@ -34,7 +34,7 @@ const MarketStatus = () => {
 
   const fetchMarketStatus = async () => {
     try {
-      const res = await fetch(`${apiConfig.stocksApiUrl}/stocks/market-status`);
+      const res = await fetch(`${apiConfig.stocksApiUrl}/api/market-status`);
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
@@ -47,7 +47,7 @@ const MarketStatus = () => {
         "closed": "Market Closed"
       };
 
-      setMarketStatus(statusMap[data.market] || getMarketStatus());
+      setMarketStatus(statusMap[data.market_status] || getMarketStatus());
       setError(null);
       
     } catch (err) {

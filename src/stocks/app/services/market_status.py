@@ -9,7 +9,7 @@ import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('uvicorn.error')
 
 class MarketStatusService:
     def __init__(self):
@@ -74,7 +74,7 @@ class MarketStatusService:
         cached_status = self.get_cached_status()
         if cached_status:
             logger.info("Retrieved market status from cache")
-            return {"market_status": cached_status}
+            return cached_status
 
         # If not in cache, fetch from API
         api_status = self.fetch_from_api()
@@ -82,7 +82,7 @@ class MarketStatusService:
             # Update cache with new data
             if self.update_cache(api_status):
                 logger.info("Updated cache with new market status")
-            return {"market_status": api_status}
+            return api_status
 
         logger.warning("Failed to get market status from both cache and API")
-        return {"market_status": None}
+        return None
