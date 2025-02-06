@@ -1,0 +1,26 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rss-news-service
+  labels:
+    app: rss-news-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rss-news-service
+  template:
+    metadata:
+      labels:
+        app: rss-news-service
+    spec:
+      containers:
+      - name: rss-news-service
+        image: kubestock-news:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: news-secret
