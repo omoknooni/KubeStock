@@ -15,8 +15,8 @@ const getMarketStatus = () => {
   const time = now.format("HH:mm");
 
   if (time >= "09:30" && time < "16:00") return "Market Open";
-  if (time >= "16:00" && time < "20:00") return "After Market Closed";
-  if (time >= "04:00" && time < "09:30") return "Pre-Market Closed";
+  if (time >= "16:00" && time < "20:00") return "After Market Open";
+  if (time >= "04:00" && time < "09:30") return "Pre-Market Open";
   return "Market Closed";
 };
 
@@ -34,7 +34,7 @@ const MarketStatus = () => {
 
   const fetchMarketStatus = async () => {
     try {
-      const res = await fetch(`${apiConfig.stocksApiUrl}/api/market-status`);
+      const res = await fetch(`/api/stocks/market-status`);
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
@@ -42,8 +42,8 @@ const MarketStatus = () => {
 
       const statusMap = {
         "open": "Market Open",
-        "pre-market": "Pre-Market Closed",
-        "after-hours": "After Market Closed",
+        "extended-hours": "Pre-Market Open",
+        "after-hours": "After-Market Open",
         "closed": "Market Closed"
       };
 

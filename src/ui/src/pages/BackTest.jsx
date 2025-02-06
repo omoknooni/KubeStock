@@ -11,7 +11,7 @@ const BacktestPage = () => {
 
   const handleBacktest = async (params) => {
     try {
-      const response = await fetch(`${apiConfig.backtestApiUrl}/backtest`, {
+      const response = await fetch(`/api/backtest/run`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(params),

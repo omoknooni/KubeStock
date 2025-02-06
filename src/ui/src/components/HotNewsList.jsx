@@ -86,7 +86,7 @@ const HotNews =  () => {
   useEffect(() => {
     const fetchData = async () => {
       // [type: hot] 뉴스만을 가져오는 API 연동
-      // const res = await fetch(`${apiConfig.newsApiUrl}/api/news?type=hot`);
+      // const res = await fetch(`/api/news?type=hot`);
       // const data = await res.json();
       // setNews(data.articles);
       setNews(sampleNews);

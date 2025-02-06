@@ -112,7 +112,7 @@ const StockInfo = () => {
   useEffect(() => {
     const fetchStockInfoData = async () => {
       try {
-        const response = await fetch(`${config.stocksApiUrl}/stocks/${stockSymbol}/info`);
+        const response = await fetch(`/api/stocks/${stockSymbol}/info`);
         const data = await response.json();
         setStockInfoData(data);
       } catch (error) {

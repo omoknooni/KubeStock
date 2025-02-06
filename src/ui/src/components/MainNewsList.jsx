@@ -84,7 +84,7 @@ const MainNews = () => {
   useEffect(() => {
     const fetchData = async () => {
       // [type: main] 뉴스만을 가져오는 API 연동
-      // const res = await fetch(`${apiConfig.newsApiUrl}/api/news?type=main`);
+      // const res = await fetch(`/api/news?type=main`);
       // const data = await res.json();
       // setNews(data.articles);
       setNews(sampleNews);

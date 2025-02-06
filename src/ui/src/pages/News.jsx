@@ -11,7 +11,7 @@ const News = () => {
   // useEffect(() => {
   //   const fetchData = async () => { // async 함수로 변경
   //     try {
-  //       const res = await fetch("http://localhost:8000/news");
+  //       const res = await fetch("/api/news");
   //       if (!res.ok) { // 응답 상태 코드 확인
   //         throw new Error(`HTTP error! status: ${res.status}`);
   //       }
