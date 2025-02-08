@@ -1,9 +1,13 @@
 from fastapi import APIRouter, HTTPException, status
-from app.services.stock_data import fetch_stock_data, fetch_stock_info
+from app.services.stock_data import fetch_stock_data, fetch_stock_info, search_ticker
 from app.services.market_status import MarketStatusService
 from datetime import datetime
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/stocks", tags=["Stocks"])
+
+class StockData(BaseModel):
+    query: str
 
 # @router.get("/{symbol}")
 # async def get_stock_data(symbol: str):
@@ -54,3 +58,14 @@ def get_market_status():
         return {"status": "success", "market_status": status,  "time": datetime.now().isoformat()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching market status: {str(e)}")
+    
+@router.post("/search")
+def search_from_ticker(query: StockData):
+    """
+    Return stock's ticker and full name for a specific symbol part
+    """
+    # Implement logic to search for stocks based on symbol part
+    # This could involve querying a database or an external API
+    # For simplicity, let's assume we have a function that returns search results
+    search_results = search_ticker(query)
+    return search_results

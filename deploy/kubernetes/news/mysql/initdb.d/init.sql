@@ -10,3 +10,10 @@ CREATE TABLE IF NOT EXISTS rss_news (
     media_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS market_stocks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticker VARCHAR(10) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    exchange VARCHAR(50),
+);

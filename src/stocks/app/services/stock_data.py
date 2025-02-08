@@ -1,5 +1,6 @@
 from functools import lru_cache
 from datetime import datetime
+import pymysql
 import yfinance as yf
 import aiohttp
 import os
@@ -9,6 +10,16 @@ from dotenv import load_dotenv
 load_dotenv()
 API_KEY = os.getenv("STOCK_API_KEY")
 BASE_URL = "https://www.alphavantage.co/query"
+
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+}
+
+def get_conn():
+    return pymysql.connect(**DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
 
 # Simple Cache wrapper with timeout
 # TODO : Redis같은 캐시처리
@@ -102,3 +113,23 @@ def fetch_stock_info(symbol: str):
         short_info['nav'] = info.get('navPrice', 'N/A')
 
     return short_info
+
+def search_ticker(query: str):
+    """
+    주어진 검색어를 포함하는 주식 종목 ticker와 full_name을 검색합니다.
+    """
+    # res = [{"ticker": "AAPL", "name": "APPLE Inc."},]
+
+    try:
+        conn = get_conn()
+        with conn.cursor() as cursor:
+            sql = "SELECT ticker, name FROM market_stocks WHERE ticker LIKE %s"
+            cursor.execute(sql, (f"%{query}%"))
+            results = cursor.fetchall()
+            res = [{"ticker": row['ticker'], "name": row['name']} for row in results]
+    except Exception as e:
+        raise ValueError(f"Database Error: {str(e)}")
+    finally:
+        conn.close()
+
+    return res
