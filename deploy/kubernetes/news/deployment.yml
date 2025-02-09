@@ -17,8 +17,7 @@ spec:
     spec:
       containers:
       - name: rss-news-service
-        image: kubestock-news:latest
-        imagePullPolicy: Never
+        image: omoknooni/kubestock-news:latest
         ports:
         - containerPort: 3000
         envFrom:

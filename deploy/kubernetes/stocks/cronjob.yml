@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ticker-scraper
+spec:
+  schedule: "0 4 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: ticker-scraper
+            image: omoknooni/kubestock-tickerscraper:latest
+            envFrom:
+            - secretRef:
+                name: stocks-secret
+          restartPolicy: OnFailure

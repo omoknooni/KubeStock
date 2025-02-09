@@ -33,7 +33,7 @@ spec:
   ports:
     - port: 3306
   selector:
-    app: news-db
+    app: kubestock-db
 
 ---
 apiVersion: apps/v1
@@ -44,21 +44,24 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: news-db
+      app: kubestock-db
   template:
     metadata:
       labels:
-        app: news-db
+        app: kubestock-db
     spec:
       containers:
-      - name: news-db
+      - name: kubestock-db
         image: mysql:latest
         envFrom:
         - secretRef:
-            name: news-secret
+            name: db-secret
         ports:
         - containerPort: 3306
         volumeMounts:
+        - name: mysql-config
+          mountPath: /etc/mysql/my.cnf
+          subPath: my.cnf
         - name: db-data
           mountPath: /var/lib/mysql
         - name: db-init
