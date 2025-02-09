@@ -1,11 +1,19 @@
+<div align="center">
+    <img alt="kubestock" height="200px" src="./img/kubestock.png">
+</div>
+
 # KubeStock
+Integrated Stock Service 
 
 ## Service Architecture
-![service_architecture.png](./img/20250126_001608.png)
+![service_architecture.png](./img/kubestock-architecture.png)
 
 ## Service List
-### Live Stock info
+### Stock info
+Get Information about stocks (chart, heatmap, Economic Calender...)
 
 ### Financial News
+Watch for Financial News from many sources  
 
 ### Stock Backtesting
+Build your own Portfolio & Run Backtest and get result  
