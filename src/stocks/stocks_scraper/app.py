@@ -1,6 +1,7 @@
 import pymysql
 import requests
 import os
+import sys
 import pandas as pd
 
 from dotenv import load_dotenv
@@ -19,8 +20,15 @@ class Config:
 
 
 
-def get_conn():
-    return pymysql.connect(**Config.DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
+def check_connectivity():
+    try:
+        conn = pymysql.connect(**Config.DB_CONFIG)
+        with conn.cursor() as c:
+            c.execute("SELECT 1")
+        return True, conn
+    except pymysql.Error as e:
+        print(f"[!] DB Connection Error: {e}")
+        return False, None
 
 def insert_tickers(conn, df, exchange):
     try:
@@ -87,14 +95,18 @@ def get_nyse_tickers():
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    print(f"[*] Get Tickers...")
-    nasdaq = get_nasdaq_tickers()
-    nyse = get_nyse_tickers()
-
     print(f"[*] Connect to DB...")
-    conn = get_conn()
+    is_connected, conn = check_connectivity()
+
+    if not is_connected:
+        print(f"[!] DB Connection Error")
+        sys.exit(1)
 
     try:
+        print(f"[*] Get Tickers...")
+        nasdaq = get_nasdaq_tickers()
+        nyse = get_nyse_tickers()
+
         print(f"[*] Insert Ticker info...")
         exchange = [(nasdaq, 'nasdaq'), (nyse, 'nyse')]
 

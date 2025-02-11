@@ -11,11 +11,17 @@ load_dotenv()
 API_KEY = os.getenv("STOCK_API_KEY")
 BASE_URL = "https://www.alphavantage.co/query"
 
+# DB_CONFIG = {
+#     "host": os.getenv("DB_HOST"),
+#     "user": os.getenv("DB_USER"),
+#     "password": os.getenv("DB_PASSWORD"),
+#     "database": os.getenv("DB_NAME"),
+# }
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'qweiop123',
+    'database': 'stock',
 }
 
 def get_conn():
@@ -123,8 +129,8 @@ def search_ticker(query: str):
     try:
         conn = get_conn()
         with conn.cursor() as cursor:
-            sql = "SELECT ticker, name FROM market_stocks WHERE ticker LIKE %s"
-            cursor.execute(sql, (f"%{query}%"))
+            sql = "SELECT ticker, name FROM market_stocks WHERE ticker LIKE %s LIMIT 10"
+            cursor.execute(sql, (f"%{query.query}%"))
             results = cursor.fetchall()
             res = [{"ticker": row['ticker'], "name": row['name']} for row in results]
     except Exception as e:
