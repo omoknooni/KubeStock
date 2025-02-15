@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { TextField, Typography, Button, MenuItem, Checkbox, FormControlLabel, Select, InputAdornment, Card, Box, CardContent } from "@mui/material";
+import React, { useState, useEffect, useRef } from "react";
+import { TextField, Typography, Button, MenuItem, Checkbox, FormControlLabel, Select, InputAdornment, Card, Box, CardContent, CircularProgress, Autocomplete } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
 
 const BacktestForm = ({ onSubmit }) => {
@@ -15,6 +15,37 @@ const BacktestForm = ({ onSubmit }) => {
   const [portfolios, setPortfolios] = useState([]);
   const [editingTickers, setEditingTickers] = useState([]);
   const [errors, setErrors] = useState({});
+  const [suggestions, setSuggestions] = useState([]); // 자동완성 결과 저장
+  const [loading, setLoading] = useState(false); // API 요청 상태
+  const debounceTimerRef = useRef(null);
+
+  const fetchTickerSuggestions = async (query, setSuggestions, setLoading) => {
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // const response = await fetch("/api/stocks/search", {
+      const response = await fetch("http://localhost:8000/api/stocks/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+
+      const data = await response.json();
+      // const data = [
+      //   {"ticker": "AAPL", "name": "APPLE Inc."},
+      // ]
+      console.log(data);
+      setSuggestions(data); // 자동완성 리스트 업데이트
+    } catch (error) {
+      console.error("Error fetching ticker suggestions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const validateInputs = () => {
     const newErrors = {};
@@ -36,7 +67,7 @@ const BacktestForm = ({ onSubmit }) => {
     // 에러가 없으면 true, 있으면 false 반환
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // 포트폴리오 객체 추가/삭제
   const addPortfolio = () => {
     setPortfolios([...portfolios, {
@@ -62,7 +93,13 @@ const BacktestForm = ({ onSubmit }) => {
     const updatedPortfolios = [...portfolios];
     updatedPortfolios[index].allocation[""] = 0;
     setPortfolios(updatedPortfolios);
+
+    setEditingTickers((prev) => ({
+      ...prev,
+      [`${index}-`]: "",
+    }));
   };
+
   const updateTicker = (index, oldKey, newKey, value) => {
     setPortfolios((prevPortfolios) => {
       return prevPortfolios.map((portfolio, i) => {
@@ -81,12 +118,24 @@ const BacktestForm = ({ onSubmit }) => {
       });
     });
   };
+
+  // AutoComplete에서 입력값이 변할 때 처리
   const handleTickerChange = (index, oldKey, newKey) => {
     setEditingTickers((prev) => ({
       ...prev,
       [`${index}-${oldKey}`]: newKey, // 현재 입력 중인 값을 별도 저장
     }));
-  };
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // 백엔드 API 호출해서 입력한 값에 대한 결과 fetch
+    // fetchTickerSuggestions(newKey);
+    debounceTimerRef.current = setTimeout(() => {
+      fetchTickerSuggestions(newKey, setSuggestions, setLoading);
+    }, 500);
+ };
   
   const handleTickerBlur = (index, oldKey) => {
     setPortfolios((prevPortfolios) => {
@@ -263,12 +312,50 @@ const BacktestForm = ({ onSubmit }) => {
 
                       {Object.entries(portfolio.allocation).map(([ticker, percentage]) => (
                         <div key={ticker} style={{ display: "flex", gap: "10px", marginTop: "5px", justifyContent: "space-between"}}>
-                          <TextField
+                          {/* <TextField
                             label="Ticker"
                             value={editingTickers[`${index}-${ticker}`] ?? ticker}
                             onChange={(e) => handleTickerChange(index, ticker, e.target.value)}
                             onBlur={() => handleTickerBlur(index, ticker)}
-                          />
+                          /> */}
+                        <Autocomplete
+                          freeSolo
+                          sx={{ width: "80%" }}
+                          options={suggestions}
+                          getOptionLabel={(option) => `${option.ticker}`}
+                          value={{ ticker: editingTickers[`${index}-${ticker}`] ?? ticker }}
+                          onInputChange={(event, newInputValue) => handleTickerChange(index, ticker, newInputValue)}
+                          onChange={(event, newValue) => {
+                            if (newValue) {
+                              const selectedTicker = newValue.ticker;
+                              updateTicker(index, ticker, selectedTicker, portfolio.allocation[ticker] || 0);
+                              setEditingTickers((prev) => ({
+                                ...prev,
+                                [`${index}-${selectedTicker}`]: selectedTicker,
+                              }));
+                              setSuggestions([]);
+                            }
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Ticker"
+                              fullWidth
+                              value={editingTickers[`${index}-${ticker}`] ?? ticker}
+                              onBlur={() => handleTickerBlur(index, ticker)}
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
+                            />
+                          )}
+                        />
+
                           <TextField
                             label="Allocation (%)"
                             type="number"
