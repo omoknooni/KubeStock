@@ -129,7 +129,7 @@ def search_ticker(query: str):
     try:
         conn = get_conn()
         with conn.cursor() as cursor:
-            sql = "SELECT ticker, name FROM market_stocks WHERE ticker LIKE %s LIMIT 10"
+            sql = "SELECT ticker, name FROM market_stocks WHERE ticker LIKE %s ORDER BY LENGTH(ticker) ASC LIMIT 10"
             cursor.execute(sql, (f"%{query.query}%"))
             results = cursor.fetchall()
             res = [{"ticker": row['ticker'], "name": row['name']} for row in results]
