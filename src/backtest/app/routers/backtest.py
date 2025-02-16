@@ -4,7 +4,7 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api/backtest", tags=["backtest"])
 
-@router.post("/")
+@router.post("/run")
 async def backtest(params: BacktestRequest):
     """
     Run backtest for input ticker, parameters

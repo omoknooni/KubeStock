@@ -11,7 +11,7 @@ const BacktestPage = () => {
 
   const handleBacktest = async (params) => {
     try {
-      const response = await fetch(`/api/backtest/run`, {
+      const response = await fetch(`${apiConfig.backtestApiUrl}/api/backtest/run`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(params),
@@ -30,8 +30,8 @@ const BacktestPage = () => {
     <div>
       <BacktestForm onSubmit={handleBacktest} />
       {/* TODO: 여러 포트폴리오 출력 */}
-      {data && <PerformanceChart performance={data.performance} annual_returns={data.annual_returns} />}
-      {data && <DrawdownChart drawdown={data.drawdown} />}
+      {data && <PerformanceChart performance={data.performance} annual_returns={data.annual_returns} date={data.date} />}
+      {data && <DrawdownChart drawdown={data.drawdown} date={data.date} />}
 
       {/* 🔹 오류 발생 시 경고 모달 */}
       <Dialog open={!!error} onClose={() => setError(null)}>

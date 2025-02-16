@@ -2,9 +2,24 @@ import React from "react";
 import { ResponsiveLine } from "@nivo/line";
 import { Typography, Box, Card, CardContent } from "@mui/material";
 
-const DrawdownChart = ({ drawdown }) => {
-  const chartData = [{ id: "Portfolio", data: drawdown.map((item) => ({ x: item[0], y: item[1] })) }];
+// 차트에 넣을 수 있도록 데이터 변환
+const transformDataForNivo = (drawdown, date) => {
+    return drawdown.map(item => {
+        const id = Object.keys(item)[0]; // portfolio 이름
+        const values = item[id]; // 해당 portfolio의 drawdown list
+  
+        return {
+            id,
+            data: date.map((dateStr, index) => ({
+                x: dateStr,
+                y: values[index]
+            }))
+        };
+    });
+  };
 
+const DrawdownChart = ({ drawdown, date }) => {
+  const chartData = transformDataForNivo(drawdown, date)
   return (
     <Box>
         <Card sx={{ padding: 2, flexGrow: 1, marginBottom: 2 }}>
