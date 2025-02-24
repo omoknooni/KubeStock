@@ -133,8 +133,13 @@ class RSI(bt.Strategy):
 def fetch_data(ticker: str, start: str, end: str):
     try:
         # Download data from yfinance
-        # yfinance module Version Issue : use "0.2.43"
         df = yf.download(ticker, start=start, end=end)
+
+        # Convert shape of df with correct shape of BT's DataFeed 
+        df.columns = df.columns.droplevel(1)
+        df = df.rename(columns={"Price": "Close"})
+        df.columns.name = None
+        df = df.reset_index().rename(columns={"index":"Date"}).set_index("Date")
 
         df.rename(columns={
             "Open": "open",
