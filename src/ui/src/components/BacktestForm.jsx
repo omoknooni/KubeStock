@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { TextField, Typography, Button, MenuItem, Checkbox, FormControlLabel, Select, InputAdornment, Card, Box, CardContent, CircularProgress, Autocomplete } from "@mui/material";
+import { TextField, Typography, Button, MenuItem, Checkbox, FormControlLabel, Select, InputAdornment, Card, Box, CardContent, CircularProgress, Autocomplete, InputLabel, FormControl } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
 import apiConfig from "../config/apiConfig";
 
@@ -10,7 +10,7 @@ const BacktestForm = ({ onSubmit }) => {
     initial_capital: 10000,
     cashflow: 0,
     cashflow_freq: "yearly",
-    adjustInflation: false,
+    adjust_inflation: false,
     portfolio: [],
   });
   const [portfolios, setPortfolios] = useState([]);
@@ -210,7 +210,7 @@ const BacktestForm = ({ onSubmit }) => {
                 slotProps={{ inputLabel: {shrink:true}}}
               />
             </Box>
-            <Box sx={{ display: "flex", gap: 2, marginBottom: 4, justifyContent: "space-between"}}>
+            <Box sx={{ display: "flex", gap: 2, marginBottom: 4}}>
               <TextField
                 required
                 type="number"
@@ -221,6 +221,7 @@ const BacktestForm = ({ onSubmit }) => {
                 onChange={(e) => setParams({ ...params, initial_capital: Number(e.target.value) })}
                 error={!!errors.initial_capital}
                 helperText={errors.initial_capital}
+                sx={{ flex: 1 }}
               />
               <TextField
                 required
@@ -230,15 +231,19 @@ const BacktestForm = ({ onSubmit }) => {
                 InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                 value={params.cashflow}
                 onChange={(e) => setParams({ ...params, cashflow: Number(e.target.value) })}
+                sx={{ flex: 1 }}
               />
-              <Select value={params.cashflow_freq} fullWidth onChange={(e) => setParams({ ...params, cashflow_freq: e.target.value })}>
-                <MenuItem value="yearly">Yearly</MenuItem>
-                <MenuItem value="monthly">Monthly</MenuItem>
-              </Select>
+              <FormControl variant="standard" sx={{ flex: 1 }}>
+                <InputLabel id="cashflow_frequency-helper">Cashflow Frequency</InputLabel>
+                <Select labelId="cashflow_frequency-helper" label="cashflow_frequency" value={params.cashflow_freq} fullWidth onChange={(e) => setParams({ ...params, cashflow_freq: e.target.value })}>
+                  <MenuItem value="yearly">Yearly</MenuItem>
+                  <MenuItem value="monthly">Monthly</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
             <Box sx={{ display: "flex", gap: 2, marginBottom: 2, justifyContent: "space-between"}}>
               <FormControlLabel
-                control={<Checkbox checked={params.adjustInflation} onChange={(e) => setParams({ ...params, adjustInflation: e.target.checked })} />}
+                control={<Checkbox checked={params.adjust_inflation} onChange={(e) => setParams({ ...params, adjust_inflation: e.target.checked })} />}
                 label="Adjust for inflation"
               />
             </Box>
@@ -277,15 +282,18 @@ const BacktestForm = ({ onSubmit }) => {
                         sx={{marginBottom:1, marginRight: 1, width: "60%"}}
                       />
 
-                      <Select
-                        value={portfolio.rebalance_freq}
-                        onChange={(e) => updatePortfolio(index, "rebalance_freq", e.target.value)}
-                        sx={{}}
-                      >
-                        <MenuItem value="monthly">Monthly</MenuItem>
-                        <MenuItem value="quarterly">Quarterly</MenuItem>
-                        <MenuItem value="yearly">Yearly</MenuItem>
-                      </Select>
+                      <FormControl>
+                        <InputLabel id="rebalance_freq-helper">Rebalance_Frequency</InputLabel>
+                        <Select
+                          value={portfolio.rebalance_freq}
+                          onChange={(e) => updatePortfolio(index, "rebalance_freq", e.target.value)}
+                          sx={{}}
+                        >
+                          <MenuItem value="monthly">Monthly</MenuItem>
+                          <MenuItem value="quarterly">Quarterly</MenuItem>
+                          <MenuItem value="yearly">Yearly</MenuItem>
+                        </Select>
+                      </FormControl>
 
                       <TextField 
                         label="Drag (%)"
@@ -324,10 +332,10 @@ const BacktestForm = ({ onSubmit }) => {
                           options={suggestions}
                           getOptionLabel={(option) => `${option.ticker}`}
                           value={{ ticker: editingTickers[`${index}-${ticker}`] ?? ticker }}
-                          onInputChange={(event, newInputValue) => handleTickerChange(index, ticker, newInputValue)}
+                          onInputChange={(event, newInputValue) => handleTickerChange(index, ticker, newInputValue.toUpperCase())}
                           onChange={(event, newValue) => {
                             if (newValue) {
-                              const selectedTicker = newValue.ticker;
+                              const selectedTicker = newValue.ticker.toUpperCase();
                               updateTicker(index, ticker, selectedTicker, portfolio.allocation[ticker] || 0);
                               setEditingTickers((prev) => ({
                                 ...prev,

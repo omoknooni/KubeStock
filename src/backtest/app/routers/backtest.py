@@ -15,6 +15,7 @@ async def backtest(params: BacktestRequest):
         "initial_capital": int,
         "cashflow": int,
         "cashflow_freq": str,
+        "adjust_inflation": bool,
         "portfolio": [
             {
                 "name": str,
@@ -63,6 +64,7 @@ async def backtest(params: BacktestRequest):
                     params.initial_capital,
                     params.cashflow,
                     params.cashflow_freq,
+                    params.adjust_inflation,
                     portfolio
                 )
                 total_result["date"] = result["date"]
