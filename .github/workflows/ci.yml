@@ -1,0 +1,66 @@
+name: CI - Build & Push to Docker Hub
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/backtest/**'
+      - 'src/news/**'
+      - 'src/stocks/**'
+      - 'src/ui/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backtest: ${{ steps.changes.outputs.backtest }}
+      news: ${{ steps.changes.outputs.news }}
+      stocks: ${{ steps.changes.outputs.stocks }}
+      ui: ${{ steps.changes.outputs.ui }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 변경점이 발생한 서비스만 파악
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            backtest:
+              - 'src/backtest/**'
+            news:
+              - 'src/news/**'
+            stocks:
+              - 'src/stocks/**'
+            ui:
+              - 'src/ui/**'
+
+  build-backtest:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backtest == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: backtest
+
+  build-news:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.news == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: news
+
+  build-stocks:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.stocks == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: stocks
+
+  build-ui:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ui == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: ui

@@ -1,0 +1,53 @@
+name: Build & Push Docker Image
+
+# ci.yml에서 각 서비스에 대해서 트리거되도록 설정
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 이미지 push를 위한 허브 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 태그 생성
+      - name: Set Tag
+        id: tag
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # 이미지 빌드 & push
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_NAME: "${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}"
+        run: |
+          docker build -t $IMAGE_NAME:${{ step.tag.outputs.sha_short }} -f src/${{ inputs.service }}/Dockerfile src/${{ inputs.service }}
+          docker push $IMAGE_NAME:${{ step.tag.outputs.sha_short }}
+
+      # # Manifest의 이미지 태그 변경
+      # - name: Update Manifest
+      #   working-directory: deploy/kubernetes/${{ inputs.service }}
+      #   run: |
+      #     sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:.*|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ env.TAG }}" deployment.yml
+
+      # # Manifest push
+      # - name: Commit & Push Manifest
+      #   working-directory: deploy/kubernetes/${{ inputs.service }}
+      #   run: |
+      #     git config --global user.name "omoknooni"
+      #     git config --global user.email "hihm0609@gmail.com"
+      #     git add .
+      #     git commit -m "Update ${{ inputs.service }} image tag to ${{ env.TAG }}"
+      #     git push origin main
