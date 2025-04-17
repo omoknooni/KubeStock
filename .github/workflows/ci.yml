@@ -39,6 +39,8 @@ jobs:
 
   build-backtest:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.backtest == 'true'
     uses: ./.github/workflows/build.yml
     with:
@@ -46,6 +48,8 @@ jobs:
 
   build-news:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.news == 'true'
     uses: ./.github/workflows/build.yml
     with:
@@ -53,6 +57,8 @@ jobs:
 
   build-stocks:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.stocks == 'true'
     uses: ./.github/workflows/build.yml
     with:
@@ -60,6 +66,8 @@ jobs:
 
   build-ui:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.ui == 'true'
     uses: ./.github/workflows/build.yml
     with:
