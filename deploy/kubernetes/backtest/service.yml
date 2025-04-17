@@ -7,8 +7,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    labels:
-      app: backtest
+    app: backtest
   ports:
     - port: 80
       protocol: TCP
