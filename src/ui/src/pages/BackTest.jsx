@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import BacktestForm from "../components/BacktestForm";
 import PerformanceChart from "../components/PerformanceChart";
 import DrawdownChart from "../components/DrawdownChart";
-import apiConfig from "../config/apiConfig";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 
 const BacktestPage = () => {
@@ -11,7 +10,7 @@ const BacktestPage = () => {
 
   const handleBacktest = async (params) => {
     try {
-      const response = await fetch(`${apiConfig.backtestApiUrl}/api/backtest/run`, {
+      const response = await fetch(`/api/backtest/run`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(params),

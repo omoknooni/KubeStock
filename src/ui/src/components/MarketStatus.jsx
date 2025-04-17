@@ -5,7 +5,6 @@ import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-import apiConfig from "../config/apiConfig";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

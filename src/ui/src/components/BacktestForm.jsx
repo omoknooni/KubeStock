@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { TextField, Typography, Button, MenuItem, Checkbox, FormControlLabel, Select, InputAdornment, Card, Box, CardContent, CircularProgress, Autocomplete, InputLabel, FormControl } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
-import apiConfig from "../config/apiConfig";
 
 const BacktestForm = ({ onSubmit }) => {
   const [params, setParams] = useState({
@@ -28,7 +27,7 @@ const BacktestForm = ({ onSubmit }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${apiConfig.stocksApiUrl}/api/stocks/search`, {
+      const response = await fetch(`/api/stocks/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),

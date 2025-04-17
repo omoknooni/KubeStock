@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Box, Card, CardContent, CardMedia, Typography, Pagination } from "@mui/material";
 import getRelativeTime from "./util";
-import apiConfig from "../config/apiConfig";
 
 
 const sampleNews = [

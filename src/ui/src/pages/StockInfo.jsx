@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Container, Typography, Box, Grid, Paper } from "@mui/material";
 import { useParams } from "react-router-dom";
 
-import config from "../config/apiConfig";
-
 const Equity = ({data}) => {
     return (
         <Box mt={4}>
