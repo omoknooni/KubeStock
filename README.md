@@ -89,20 +89,23 @@ git clone https://github.com/omoknooni/KubeStock.git
 cd KubeStock
 ```
 
-2. Terraform을 사용한 인프라 프로비저닝:
+2. 배포 (EKS or Native Kubernetes Cluster)
+  - Terraform을 사용한 EKS 프로비저닝:
 ```bash
 cd deploy/terraform
 terraform init
 terraform apply
 ```
-
-3. Kubernetes에 배포:
+  - Kubernetes에 배포:
 ```bash
-kubectl apply -f deploy/kubernetes/db/
-kubectl apply -f deploy/kubernetes/stocks/
-kubectl apply -f deploy/kubernetes/news/
-kubectl apply -f deploy/kubernetes/backtest/
-kubectl apply -f deploy/kubernetes/ui/
+cd deploy/kubernetes
+bash create-secrets.sh
+kubectl apply -f configmaps/
+kubectl apply -f db/
+kubectl apply -f stocks/
+kubectl apply -f news/
+kubectl apply -f backtest/
+kubectl apply -f ui/
 ```
 
 ## 시작하기

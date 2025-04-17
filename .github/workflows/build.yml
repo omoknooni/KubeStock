@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,23 +33,23 @@ jobs:
       # 이미지 빌드 & push
       - name: Build and Push Docker Image
         env:
-          IMAGE_NAME: "${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}"
+          IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}
         run: |
-          docker build -t $IMAGE_NAME:${{ step.tag.outputs.sha_short }} -f src/${{ inputs.service }}/Dockerfile src/${{ inputs.service }}
-          docker push $IMAGE_NAME:${{ step.tag.outputs.sha_short }}
+          docker build -t $IMAGE_NAME:${{ steps.tag.outputs.sha_short }} -f src/${{ inputs.service }}/Dockerfile src/${{ inputs.service }}
+          docker push $IMAGE_NAME:${{ steps.tag.outputs.sha_short }}
 
-      # # Manifest의 이미지 태그 변경
-      # - name: Update Manifest
-      #   working-directory: deploy/kubernetes/${{ inputs.service }}
-      #   run: |
-      #     sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:.*|image: ${{ secrets.DOCKER_USERNAME }}/$IMAGE_NAME:${{ env.TAG }}" deployment.yml
+      # Manifest의 이미지 태그 변경
+      - name: Update Manifest
+        working-directory: deploy/kubernetes/${{ inputs.service }}
+        run: |
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}:.*|image: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}:${{ steps.tag.outputs.sha_short }}|" deployment.yml
 
-      # # Manifest push
-      # - name: Commit & Push Manifest
-      #   working-directory: deploy/kubernetes/${{ inputs.service }}
-      #   run: |
-      #     git config --global user.name "omoknooni"
-      #     git config --global user.email "hihm0609@gmail.com"
-      #     git add .
-      #     git commit -m "Update ${{ inputs.service }} image tag to ${{ env.TAG }}"
-      #     git push origin main
+      # Manifest push
+      - name: Commit & Push Manifest
+        working-directory: deploy/kubernetes/${{ inputs.service }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update ${{ inputs.service }} image tag to ${{ steps.tag.outputs.sha_short }}"
+          git push origin main
