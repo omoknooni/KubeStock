@@ -1,0 +1,57 @@
+# Kubernetes GitOps with Argo CD
+
+이 프로젝트는 [Argo CD](https://argo-cd.readthedocs.io/en/stable/)를 사용하여 Kubernetes 애플리케이션을 GitOps 방식으로 관리합니다.  
+`deploy/kubernetes/` 디렉토리는 각 서비스의 Kubernetes 리소스와 Argo CD Application 정의들을 포함합니다.
+
+---
+
+## 📂 디렉토리 구조
+
+```
+deploy/kubernetes/  
+├── apps/ # App-of-Apps를 구성하는 Application 리소스들 
+│ ├── root-app.yaml 
+│ ├── backtest-app.yaml 
+│ ├── news-app.yaml 
+│ ├── stocks-app.yaml 
+│ ├── ui-app.yaml 
+│ ├── db-app.yaml 
+│ └── configmaps-app.yaml 
+├── backtest/ # backtest 서비스 리소스 
+├── news/ # news 서비스 리소스 
+├── stocks/ # stocks 서비스 리소스 
+├── ui/ # 프론트엔드 서비스 리소스 
+├── db/ # DB 배포 리소스 
+├── configmaps/ # 공통 설정 리소스 
+└── create-secret.sh # 시크릿 생성 스크립트 (수동 실행 또는 Job 변환 필요)
+```
+
+---
+
+## App-of-Apps?
+
+- **root-app.yaml**: Argo CD에서 최상위 Application이며, 모든 하위 서비스를 Application 리소스로 포함하는 구조
+- **recurse: true**를 이용해 `apps/` 디렉토리의 모든 Application 정의를 자동으로 동기화
+- 각 서비스는 자체 디렉토리에 정의된 `Deployment`, `Service`, `CronJob` 등의 리소스를 포함  
+-> 각 서비스들에 접근권한을 부여하는 등 역할 분리가 가능해짐 
+
+---
+
+## 초기 구성 절차
+
+1. **Argo CD 설치 (with Helm)**
+   ```bash
+    helm repo add argo https://argoproj.github.io/argo-helm
+
+    kubectl create namespace argo
+
+    # values.yaml : https://raw.githubusercontent.com/argoproj/argo-helm/main/charts/argo-cd/values.yaml
+
+    helm install argocd argo/argo-cd -f values.yaml -n argo
+   ```
+2. **argoCD에 Repo 연결**
+
+3. **Root App 등록**
+    ```
+    kubectl apply -f deploy/kubernetes/apps/root-app.yml -n argo
+    ```
