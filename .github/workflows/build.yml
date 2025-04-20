@@ -7,6 +7,10 @@ on:
       service:
         required: true
         type: string
+      scraper:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -30,19 +34,38 @@ jobs:
         run: |
           echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      # 빌드 context (서비스 or scraper)
+      - name: Set Build Context
+        id: ctx
+        run: |
+          if [[ "${{ inputs.service }}" == "news" || "${{ inputs.service }}" == "stocks" ]]; then
+            if [[ "${{ inputs.scraper }}" == "true" ]]; then
+              echo "name=kubestock-${{ inputs.service }}-scraper" >> $GITHUB_OUTPUT
+              echo "path=src/${{ inputs.service }}/scraper" >> $GITHUB_OUTPUT
+              echo "kube_path=deploy/kubernetes/${{ inputs.service }}/cronjob.yml" >> $GITHUB_OUTPUT
+            else
+              echo "name=kubestock-${{ inputs.service }}" >> $GITHUB_OUTPUT
+              echo "path=src/${{ inputs.service }}/service" >> $GITHUB_OUTPUT
+              echo "kube_path=deploy/kubernetes/${{ inputs.service }}/deployment.yml" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "name=kubestock-${{ inputs.service }}" >> $GITHUB_OUTPUT
+            echo "path=src/${{ inputs.service }}" >> $GITHUB_OUTPUT
+            echo "kube_path=deploy/kubernetes/${{ inputs.service }}/deployment.yml" >> $GITHUB_OUTPUT
+          fi
+
       # 이미지 빌드 & push
       - name: Build and Push Docker Image
-        env:
-          IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}
         run: |
-          docker build -t $IMAGE_NAME:${{ steps.tag.outputs.sha_short }} -f src/${{ inputs.service }}/Dockerfile src/${{ inputs.service }}
-          docker push $IMAGE_NAME:${{ steps.tag.outputs.sha_short }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }} \
+            -f ${{ steps.ctx.outputs.path }}/Dockerfile ${{ steps.ctx.outputs.path }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }}
+
 
       # Manifest의 이미지 태그 변경
       - name: Update Manifest
-        working-directory: deploy/kubernetes/${{ inputs.service }}
         run: |
-          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}:.*|image: ${{ secrets.DOCKER_USERNAME }}/kubestock-${{ inputs.service }}:${{ steps.tag.outputs.sha_short }}|" deployment.yml
+          sed -i "s|image: .*/${{ steps.ctx.outputs.name }}:.*|image: ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }}|" ${{ steps.ctx.outputs.kube_path }}
 
       # Manifest push
       - name: Commit & Push Manifest
@@ -51,5 +74,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Update ${{ inputs.service }} image tag to ${{ steps.tag.outputs.sha_short }}"
+
+          if [[ "${{ inputs.scraper }}" == "true" ]]; then
+            git commit -m "Update ${{ inputs.service }}-scraper image tag to ${{ steps.tag.outputs.sha_short }}"
+          else
+            git commit -m "Update ${{ inputs.service }} image tag to ${{ steps.tag.outputs.sha_short }}"
+          fi
+
           git push origin main

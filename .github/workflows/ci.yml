@@ -16,7 +16,9 @@ jobs:
     outputs:
       backtest: ${{ steps.changes.outputs.backtest }}
       news: ${{ steps.changes.outputs.news }}
+      news_scraper: ${{ steps.changes.outputs.news_scraper }}
       stocks: ${{ steps.changes.outputs.stocks }}
+      stocks_scraper: ${{ steps.changes.outputs.stocks_scraper }}
       ui: ${{ steps.changes.outputs.ui }}
     steps:
       - name: Checkout repository
@@ -31,9 +33,13 @@ jobs:
             backtest:
               - 'src/backtest/**'
             news:
-              - 'src/news/**'
+              - 'src/news/service/**'
+            news_scraper:
+              - 'src/news/scraper/**'
             stocks:
-              - 'src/stocks/**'
+              - 'src/stocks/app/**'
+            stocks_scraper:
+              - 'src/stocks/scraper/**'
             ui:
               - 'src/ui/**'
 
@@ -72,3 +78,19 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       service: ui
+
+  build-news-scraper:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.news_scraper == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: news
+      scraper: true
+
+  build-stocks-scraper:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.stocks_scraper == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      service: stocks
+      scraper: true
