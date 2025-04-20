@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: ticker-scraper
-            image: omoknooni/kubestock-tickerscraper:latest
+            image: omoknooni/kubestock-stocks-scraper:latest
             envFrom:
             - secretRef:
                 name: stocks-secret

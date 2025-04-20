@@ -81,6 +81,8 @@ jobs:
 
   build-news-scraper:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.news_scraper == 'true'
     uses: ./.github/workflows/build.yml
     with:
@@ -89,6 +91,8 @@ jobs:
 
   build-stocks-scraper:
     needs: detect-changes
+    permissions:
+      contents: write
     if: needs.detect-changes.outputs.stocks_scraper == 'true'
     uses: ./.github/workflows/build.yml
     with:
