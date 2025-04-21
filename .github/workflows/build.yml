@@ -21,6 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Secrets
+        run: |
+          echo "Username: ${{ secrets.DOCKER_USERNAME }}"
+          echo "Password set: ${{ secrets.DOCKER_PASSWORD != '' }}"
+
       # 이미지 push를 위한 허브 로그인
       # 허브 로그인을 위한 Password는 Personal Access Token 값임 (not just password)
       # When authenticating to Docker Hub with GitHub Actions, use a personal access token. Don't use your account password.
