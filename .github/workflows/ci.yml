@@ -49,6 +49,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.backtest == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: backtest
 
@@ -58,6 +59,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.news == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: news
 
@@ -67,6 +69,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.stocks == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: stocks
 
@@ -76,6 +79,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.ui == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: ui
 
@@ -85,6 +89,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.news_scraper == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: news
       scraper: true
@@ -95,6 +100,7 @@ jobs:
       contents: write
     if: needs.detect-changes.outputs.stocks_scraper == 'true'
     uses: ./.github/workflows/build.yml
+    secrets: inherit
     with:
       service: stocks
       scraper: true
