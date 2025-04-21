@@ -4,9 +4,10 @@ const express = require('express');
 const newsRoutes = require('./routes/news');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
+const { db, testConnection } = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // 미들웨어 설정
 app.use(express.json());
@@ -21,9 +22,11 @@ app.get('/health', (req, res) => {
     res.send('Welcome to the News Service');
 });
 
+// DB test connection
+testConnection();
 
 // 서버 실행
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`Swagger UI is available at http://localhost:${PORT}/api-docs`);
+    console.log(`Server is running on ${PORT}`);
+    console.log(`Swagger UI is available at /api-docs`);
 });

@@ -6,7 +6,7 @@ exports.getAllNews = async (req, res) => {
         const [rows] = await db.query('SELECT * FROM rss_news ORDER BY pub_date DESC');
         res.status(200).json({ success: true, data: rows });
     } catch (error) {
-        console.error(error);
+        console.error(`[getAllNews] DB Query Error : ${error.message}`);
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
@@ -20,7 +20,7 @@ exports.getNewsById = async (req, res) => {
         }
         res.status(200).json({ success: true, data: rows[0] });
     } catch (error) {
-        console.error(error);
+        console.error(`[getNewsById] DB Query Error : ${error.message}`);
         res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
 };
@@ -39,7 +39,6 @@ exports.getNewsList = async (req, res) => {
         if (type === "main") {
             q = `SELECT title, link, pub_date, source, media_url FROM rss_news
                 WHERE pub_date >= NOW() - INTERVAL 7 DAY
-                AND 
                 ORDER BY pub_date DESC
                 LIMIT 15`;
         }
@@ -83,7 +82,7 @@ exports.getNewsList = async (req, res) => {
             data: rows
         });
     } catch (error) {
-        console.error(error);
+        console.error(`[getNewsList] DB Query Error : ${error.message}`);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
