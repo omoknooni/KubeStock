@@ -5,10 +5,9 @@ metadata:
   name: mysql-pv
 spec:
   capacity:
-    storage: 5Gi
+    storage: 2Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: standard
   hostPath:
-    path: "/home/hyeok/news-db/data/mysql"
+    path: "/mnt/c/Users/hyeok/news-db/data/mysql"
