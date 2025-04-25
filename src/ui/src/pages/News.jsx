@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import HotNews from "../components/HotNewsList";
 import MainNews from "../components/MainNewsList";
+import TodayNews from "../components/TodayNewsList";
 import { Container, Box, Card, CardContent, CardMedia, Typography } from "@mui/material";
 
 const News = () => {
@@ -12,6 +13,7 @@ const News = () => {
     <Container sx={{ marginTop: 4, marginBottom: 7}}>
       <MainNews />
       <HotNews />
+      <TodayNews />
     </Container>
   );
 };

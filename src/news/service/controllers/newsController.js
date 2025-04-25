@@ -1,16 +1,6 @@
 // controllers/newsController.js
 const { db } = require('../db');
 
-exports.getAllNews = async (req, res) => {
-    try {
-        const [rows] = await db.query('SELECT * FROM rss_news ORDER BY pub_date DESC');
-        res.status(200).json({ success: true, data: rows });
-    } catch (error) {
-        console.error(`[getAllNews] DB Query Error : ${error.message}`);
-        res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
-};
-
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -38,7 +28,7 @@ const getNewsListFromTable = (tableName) => {
    
            // 뉴스 목록 조회 (title, link, pub_date, source, media_url 만 가져오기)
            if (type === "main") {
-               q = `SELECT title, link, pub_date, source, media_url FROM ??
+               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
                    WHERE pub_date >= NOW() - INTERVAL 7 DAY
                    ORDER BY pub_date DESC
                    LIMIT 15`;
@@ -46,14 +36,15 @@ const getNewsListFromTable = (tableName) => {
            else if (type === "hot") {
                page = 2;
                limit = 10;
-               q = `SELECT title, link, pub_date, source, media_url FROM ??
+               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
                    ORDER BY pub_date DESC
-                   LIMIT 10`;
+                   LIMIT 20`;
            }
-           else if (type === "all") {
-               page = 5;
-               limit = 30;
-               q = `SELECT title, link, pub_date, source, media_url FROM ??
+           else if (type === "today") {
+               page = 3;
+               limit = 10;
+               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
+                   WHERE DATE(pub_date) = CURDATE()
                    ORDER BY pub_date DESC
                    LIMIT 30`;
            }
