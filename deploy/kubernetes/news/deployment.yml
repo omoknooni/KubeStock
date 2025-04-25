@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: rss-news-service
-        image: omoknooni/kubestock-news:b39c8ca
+        image: omoknooni/kubestock-news:32655dc
         ports:
         - containerPort: 3000
         envFrom:
