@@ -28,7 +28,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: news-service
+                name: rss-news-service
                 port:
                   number: 80
           - path: /api/backtest
