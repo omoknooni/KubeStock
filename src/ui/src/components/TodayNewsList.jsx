@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Container, Box, Card, CardContent, CardMedia, Typography, Pagination } from "@mui/material";
+import { Container, Box, Grid, Card, CardContent, CardMedia, Typography, Pagination, Chip, IconButton } from "@mui/material";
+import { Share as ShareIcon, Bookmark as BookmarkIcon } from '@mui/icons-material';
 import getRelativeTime from "./util";
 
 
@@ -122,36 +123,103 @@ const TodayNews =  () => {
 
 
   return (
-    <Container maxWidth="lg" sx={{ p: 3, borderRadius: 2 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-       [{getTodayDate()}] 오늘의 뉴스
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          오늘의 뉴스
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          {getTodayDate()}
+        </Typography>
+      </Box>
 
-      {displayedNews.map((article) => (
-        <Card key={article.id} sx={{ display: "flex", mb: 2 }}>
-          {article.media_url && (
-            <CardMedia
-              component="img"
-              sx={{ width: 150, height: 100 }}
-              image={article.media_url || "https://placeholder.co/150x150/orange/white"}
-              alt={article.title}
-            />
-          )}
-          <CardContent>
-            <Typography variant="h6">{article.title}</Typography>
-            <Typography variant="body2" color="textSecondary">
-              {article.source} | {getRelativeTime(article.pub_date)}
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
+      <Grid container spacing={3}>
+        {displayedNews.map((article, index) => (
+          <Grid item xs={12} md={index === 0 ? 12 : 6} key={article.id}>
+            <Card 
+              sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: index === 0 ? 'row' : 'column',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 3
+                }
+              }}
+            >
+              <CardMedia
+                component="img"
+                image={article.media_url || "https://placeholder.co/150x150/orange/white"}
+                alt={article.title}
+                sx={{
+                  width: index === 0 ? '40%' : '100%',
+                  height: index === 0 ? 300 : 200,
+                  objectFit: 'cover'
+                }}
+              />
+              <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ mb: 2 }}>
+                  <Chip 
+                    label={article.source}
+                    size="small"
+                    sx={{ mb: 1 }}
+                    color="primary"
+                  />
+                  <Typography 
+                    variant={index === 0 ? "h5" : "h6"}
+                    sx={{ 
+                      fontWeight: 'bold',
+                      mb: 1,
+                      lineHeight: 1.4,
+                      height: index === 0 ? 'auto' : '3em',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {article.title}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ 
+                  mt: 'auto', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {getRelativeTime(article.pub_date)}
+                  </Typography>
+                  <Box>
+                    <IconButton size="small">
+                      <BookmarkIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small">
+                      <ShareIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
-      <Box display="flex" justifyContent="center" mt={2}>
+      <Box display="flex" justifyContent="center" mt={4}>
         <Pagination
           count={Math.ceil(news.length / ITEMS_PER_PAGE)}
           page={page}
-          onChange={handleChange}
+          onChange={(event, value) => setPage(value)}
           color="primary"
+          size="large"
+          sx={{
+            '& .MuiPaginationItem-root': {
+              fontSize: '1.1rem'
+            }
+          }}
         />
       </Box>
     </Container>

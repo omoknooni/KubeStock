@@ -1,77 +1,119 @@
 // controllers/newsController.js
 const { db } = require('../db');
 
+// Constants
+const NEWS_TYPES = {
+    MAIN: 'main',
+    HOT: 'hot',
+    TODAY: 'today'
+};
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+
+// Utility functions
+const getQueryConfig = (type) => {
+    const configs = {
+        [NEWS_TYPES.MAIN]: {
+            query: `
+                SELECT id, title, link, pub_date, source, media_url 
+                FROM ?? 
+                WHERE pub_date >= NOW() - INTERVAL 7 DAY 
+                ORDER BY pub_date DESC 
+                LIMIT 15
+            `,
+            limit: 15
+        },
+        [NEWS_TYPES.HOT]: {
+            query: `
+                SELECT id, title, link, pub_date, source, media_url 
+                FROM ?? 
+                ORDER BY pub_date DESC 
+                LIMIT 20
+            `,
+            limit: 20
+        },
+        [NEWS_TYPES.TODAY]: {
+            query: `
+                SELECT id, title, link, pub_date, source, media_url 
+                FROM ?? 
+                WHERE DATE(pub_date) = CURDATE() 
+                ORDER BY pub_date DESC 
+                LIMIT 30
+            `,
+            limit: 30
+        }
+    };
+    return configs[type];
+};
+
+// Error handler
+const handleError = (error, res, operation) => {
+    console.error(`[${operation}] DB Query Error: ${error.message}`);
+    return res.status(500).json({ 
+        success: false, 
+        message: 'Internal Server Error' 
+    });
+};
+
+// Controllers
 exports.getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
-        const [rows] = await db.query('SELECT * FROM rss_news WHERE id = ?', [id]);
+        const [rows] = await db.query(
+            'SELECT * FROM rss_news WHERE id = ?', 
+            [id]
+        );
+
         if (rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'News not found' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'News not found' 
+            });
         }
-        res.status(200).json({ success: true, data: rows[0] });
+
+        return res.status(200).json({ 
+            success: true, 
+            data: rows[0] 
+        });
     } catch (error) {
-        console.error(`[getNewsById] DB Query Error : ${error.message}`);
-        res.status(500).json({ success: false, message: 'Internal Server Error' });
+        return handleError(error, res, 'getNewsById');
     }
 };
+
 const getNewsListFromTable = (tableName) => {
     return async (req, res) => {
-       try {
-           // 요청된 페이지와 한 페이지당 개수 (기본값: page=1, limit=10)
-           const page = parseInt(req.query.page) || 1;
-           const limit = parseInt(req.query.limit) || 10;
-           const offset = (page - 1) * limit;
-   
-           // 조회할 뉴스 타입 (기본값: all / 입력가능 값: 'main', 'hot', 'all')
-           const type = req.query.type || 'all';
-           let q;
-   
-           // 뉴스 목록 조회 (title, link, pub_date, source, media_url 만 가져오기)
-           if (type === "main") {
-               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
-                   WHERE pub_date >= NOW() - INTERVAL 7 DAY
-                   ORDER BY pub_date DESC
-                   LIMIT 15`;
-           }
-           else if (type === "hot") {
-               page = 2;
-               limit = 10;
-               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
-                   ORDER BY pub_date DESC
-                   LIMIT 20`;
-           }
-           else if (type === "today") {
-               page = 3;
-               limit = 10;
-               q = `SELECT id, title, link, pub_date, source, media_url FROM ??
-                   WHERE DATE(pub_date) = CURDATE()
-                   ORDER BY pub_date DESC
-                   LIMIT 30`;
-           }
-           else {
-               return res.status(400).json({ success: false, message: "Invalid type" });
-           }
-        
-           const [rows] = await db.query(q, [tableName]);
-   
-   
-           // 총 뉴스 개수 조회
-           const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM ??`, [tableName]);
-   
-           res.status(200).json({
-               success: true,
-               page,
-               limit,
-               total,
-               totalPages: Math.ceil(total / limit),
-               data: rows
-           });
-       } catch (error) {
-           console.error(`[getNewsList] DB Query Error : ${error.message}`);
-           res.status(500).json({ success: false, message: "Internal Server Error" });
-       }
-   };
+        try {
+            const { type = 'all' } = req.query;
+            const queryConfig = getQueryConfig(type);
+
+            if (!queryConfig) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Invalid type' 
+                });
+            }
+
+            const [rows] = await db.query(queryConfig.query, [tableName]);
+            const [[{ total }]] = await db.query(
+                'SELECT COUNT(*) AS total FROM ??', 
+                [tableName]
+            );
+
+            return res.status(200).json({
+                success: true,
+                page: DEFAULT_PAGE,
+                limit: queryConfig.limit,
+                total,
+                totalPages: Math.ceil(total / queryConfig.limit),
+                data: rows
+            });
+        } catch (error) {
+            return handleError(error, res, 'getNewsList');
+        }
+    };
 };
 
+// Exports
 exports.getNewsList = getNewsListFromTable('rss_news');
 exports.getKoNewsList = getNewsListFromTable('rss_news_ko');
