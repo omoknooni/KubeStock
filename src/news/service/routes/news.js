@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllNews, getNewsById, getNewsList } = require('../controllers/newsController');
+const { getAllNews, getNewsById, getNewsList, getKoNewsList } = require('../controllers/newsController');
 
 const router = express.Router();
 
@@ -78,6 +78,9 @@ const router = express.Router();
  *         description: 서버 오류 발생
  */
 router.get('/', getNewsList);
+
+// 한국어 뉴스
+router.get('/ko', getKoNewsList);
 
 // 특정 뉴스 가져오기
 router.get('/:id', getNewsById);

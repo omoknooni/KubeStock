@@ -84,16 +84,27 @@ const HotNews =  () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // [type: hot] 뉴스만을 가져오는 API 연동
-      // const res = await fetch(`/api/news?type=hot`);
-      // const data = await res.json();
-      // setNews(data.articles);
-      setNews(sampleNews);
+      try {
+        const res = await fetch(`/api/news?type=hot`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+  
+        if (data.success && Array.isArray(data.data)) {
+          setNews(data.data);
+        } else {
+          console.warn("API returned unexpected format, fallback to sampleNews.");
+          setNews(sampleNews);
+        }
+      } catch (error) {
+        console.error("Error while Fetching data : ", error.message);
+        setNews(sampleNews);
+      }
     };
-
+  
     fetchData();
   }, []);
-
   const handleChange = (event, value) => {
     setPage(value);
   };
