@@ -11,10 +11,16 @@ on:
         required: false
         type: boolean
         default: false
+      tag:
+        required: true
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.service }}
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
@@ -34,12 +40,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # 태그 생성
-      - name: Set Tag
-        id: tag
-        run: |
-          echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       # 빌드 context (서비스 or scraper)
       - name: Set Build Context
@@ -64,28 +64,19 @@ jobs:
       # 이미지 빌드 & push
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }} \
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ inputs.tag }} \
             -f ${{ steps.ctx.outputs.path }}/Dockerfile ${{ steps.ctx.outputs.path }}
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ inputs.tag }}
 
-
-      # Manifest의 이미지 태그 변경
-      - name: Update Manifest
+      # Manifest 업데이트 내역을 artifact로 정리
+      - name: Prepare Artifact
         run: |
-          sed -i "s|image: .*/${{ steps.ctx.outputs.name }}:.*|image: ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ steps.tag.outputs.sha_short }}|" ${{ steps.ctx.outputs.kube_path }}
+          mkdir -p artifact
+          echo "${{ inputs.service }},${{ inputs.scraper }},${{ steps.ctx.outputs.name }},${{ inputs.tag }},${{ steps.ctx.outputs.kube_path }}" > artifact/tag_info.csv
 
-      # Manifest push
-      - name: Commit & Push Manifest
-        working-directory: deploy/kubernetes/${{ inputs.service }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-
-          if [[ "${{ inputs.scraper }}" == "true" ]]; then
-            git commit -m "Update ${{ inputs.service }}-scraper image tag to ${{ steps.tag.outputs.sha_short }}"
-          else
-            git commit -m "Update ${{ inputs.service }} image tag to ${{ steps.tag.outputs.sha_short }}"
-          fi
-
-          git push origin main
+      - name: Upload Artifact
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: tag-info-${{ inputs.service }}-${{ inputs.scraper }}
+          path: artifact/tag_info.csv

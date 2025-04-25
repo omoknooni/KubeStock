@@ -14,6 +14,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
+      sha_tag: ${{ steps.tag.outputs.sha_tag }}
       backtest: ${{ steps.changes.outputs.backtest }}
       news: ${{ steps.changes.outputs.news }}
       news_scraper: ${{ steps.changes.outputs.news_scraper }}
@@ -23,6 +24,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      # 빌드 이미지들을 위한 태그
+      - name: Generate Shared Tag
+        id: tag
+        run: |
+          echo "sha_tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       # 변경점이 발생한 서비스만 파악
       - name: Detect changes
@@ -52,6 +59,7 @@ jobs:
     secrets: inherit
     with:
       service: backtest
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
 
   build-news:
     needs: detect-changes
@@ -62,6 +70,7 @@ jobs:
     secrets: inherit
     with:
       service: news
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
 
   build-stocks:
     needs: detect-changes
@@ -72,6 +81,7 @@ jobs:
     secrets: inherit
     with:
       service: stocks
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
 
   build-ui:
     needs: detect-changes
@@ -83,6 +93,7 @@ jobs:
     secrets: inherit
     with:
       service: ui
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
 
   build-news-scraper:
     needs: detect-changes
@@ -94,6 +105,7 @@ jobs:
     with:
       service: news
       scraper: true
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
 
   build-stocks-scraper:
     needs: detect-changes
@@ -105,3 +117,60 @@ jobs:
     with:
       service: stocks
       scraper: true
+      tag: ${{ needs.detect-changes.outputs.sha_tag }}
+
+  manifest-update:
+    needs:
+      - detect-changes
+      - build-backtest
+      - build-news
+      - build-ui
+      - build-stocks
+      - build-news-scraper
+      - build-stocks-scraper
+    if: always()
+    runs-on: ubuntu-latest
+    concurrency:
+      group: manifest-update    # 동일 그룹으로 묶어버리기
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Update Manifests
+        id: update
+        run: |
+          cd artifacts
+          if [ "$(ls -A)" ]; then
+            services=()
+            for file in */tag_info.csv; do
+              IFS=',' read -r service scraper name tag kube_path < "$file"
+              echo "Updating $kube_path with tag $tag"
+              sed -i "s|image: .*/$name:.*|image: ${{ secrets.DOCKER_USERNAME }}/$name:$tag|" "../$kube_path"
+
+              services+=("$service")
+            done
+            echo "SERVICES=$(IFS=, ; echo "${services[*]}")" >> $GITHUB_OUTPUT
+          else
+            echo "No artifacts found, skipping manifest update."
+            exit 0
+          fi
+
+      # manifest 커밋 & push
+      - name: Commit & Push Manifest
+        if: steps.update.outputs.SERVICES != ''
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git pull --rebase
+          git add deploy/kubernetes/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          
+          git commit -m "Update ${{ steps.update.outputs.SERVICES}} image tags to ${{ needs.detect-changes.outputs.sha_tag }}"
+          git push origin main
