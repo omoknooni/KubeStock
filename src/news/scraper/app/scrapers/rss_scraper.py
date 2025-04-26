@@ -5,6 +5,7 @@ from datetime import datetime
 from dateutil import parser
 from dotenv import load_dotenv
 from typing import Optional, Dict, Any
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -144,26 +145,52 @@ def fetch_rss_feed():
             print(f"[RSS_ERROR] Failed to parse RSS feed: {bozo_exception}")
             return
 
+        if not feed.entries:
+            print("[INFO] No entries found in the RSS feed.")
+            return
+
         saved_count = 0
         skipped_count = 0
         for item in feed.entries:
             try:
-                title = item.title
-                description = item.description if "description" in item else "내용 없음"
-                link = item.link
+                # 주요 속성 추출
+                title = item.get('title', 'No Title Provided')
+                link = item.get('link', 'No Link Provided')
+
+                # description 추출 및 HTML 태그 제거
+                description_html = item.get('description', 'No Description')
+                cleaned_description = 'No Description' # 기본값
+
+                if description_html and description_html != 'No Description':
+                    try:
+                        # BeautifulSoup 객체 생성 (기본 html.parser 사용)
+                        soup = BeautifulSoup(description_html, 'html.parser')
+                        # get_text()로 모든 텍스트 추출, separator=' '는 태그 사이를 공백으로 만듦
+                        cleaned_description = soup.get_text(separator=' ').strip()
+                        # 여러 공백 문자(줄바꿈, 탭 포함)를 단일 공백으로 대체
+                        cleaned_description = ' '.join(cleaned_description.split())
+                    except Exception as html_parse_error:
+                        # HTML 파싱 중 오류 발생 시 경고 출력 및 원본 사용 고려
+                        print(f"[WARN] Could not clean HTML from description for entry '{title[:30]}...': {html_parse_error}")
+                        cleaned_description = description_html # 파싱 실패 시 원본 HTML을 그대로 둘 수도 있음
+
                 # guid가 없으면 link를 사용, 둘 다 중요하므로 누락 시 경고
                 guid = item.get("guid", item.get("link"))
                 if not guid:
                     print(f"[WARN] Article skipped: Missing both guid and link for title '{title[:30]}...'")
                     skipped_count += 1
                     continue
-
+                
+                # 기사 게재일자 추출
                 pub_date_str = item.get("published")
                 pub_date = parser.parse(pub_date_str) if pub_date_str else datetime.now()
 
-                source = item.get("dc_creator", item.get("author", "Unknown")) # author 필드도 확인
+                # 기사 원본 정보 추출
+                source = item.get('author', item.get('dc_creator', item.get('creator', 'Unknown Author'))) # author 필드도 확인
+                
+                # 기사 대표 이미지 URL 추출
                 media_url = None
-                if "media_content" in item and item.media_content:
+                if "media_content" in item and item.media_content and isinstance(item.media_content, list):
                     # media_content가 리스트일 수 있으므로 첫 번째 요소 확인
                     media_url = item.media_content[0].get("url")
 
@@ -174,7 +201,7 @@ def fetch_rss_feed():
                     continue
 
                 # 데이터 저장
-                save_article(conn, title, description, link, guid, pub_date, source, media_url)
+                save_article(conn, title, cleaned_description, link, guid, pub_date, source, media_url)
                 saved_count += 1
 
             except Exception as e:
