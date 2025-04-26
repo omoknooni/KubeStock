@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Box, Card, CardContent, CardMedia, Typography, Pagination } from "@mui/material";
-import getRelativeTime from "./util";
+import getRelativeTime from "../utils/util";
+import { getImageUrl } from "../utils/imageHelper";
 
 
 const sampleNews = [
@@ -125,7 +126,7 @@ const HotNews =  () => {
             <CardMedia
               component="img"
               sx={{ width: 150, height: 100 }}
-              image={article.media_url || "https://placeholder.co/150x150/orange/white"}
+              image={getImageUrl(article.media_url)}
               alt={article.title}
             />
           )}

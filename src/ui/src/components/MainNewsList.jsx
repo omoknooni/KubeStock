@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Typography, Card, CardMedia, CardContent, Grid, Box, Pagination } from "@mui/material";
-import getRelativeTime from "./util";
+import getRelativeTime from "../utils/util";
+import { getImageUrl } from "../utils/imageHelper";
 
 const sampleNews = [
   {
@@ -8,7 +9,8 @@ const sampleNews = [
     title: "뉴스 제목 1",
     pub_date: "2025-02-03 11:23:00",
     source: "뉴스 제공사 1",
-    media_url: "https://placehold.co/150"
+    // media_url: "https://placehold.co/150"
+    media_url: null
   },
   {
     id: 2,
@@ -111,7 +113,7 @@ const MainNews = () => {
 
   const startIndex = (page - 1) * ITEMS_PER_PAGE;
   const displayedNews = news.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
+  
   return (
     <Container maxWidth="lg" sx={{ p: 3, borderRadius: 2 }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -123,7 +125,7 @@ const MainNews = () => {
         <Grid item xs={12} md={7} sx={{height: "100%"}}>
           {displayedNews.length > 0 && (
             <Card sx={{ position: "relative", borderRadius: 3, overflow: "hidden", height: "100%" }}>
-              <CardMedia component="img" height="100%" image={displayedNews[0].media_url} alt={displayedNews[0].title} />
+              <CardMedia component="img" height="100%" image={getImageUrl(displayedNews[0].media_url)} alt={displayedNews[0].title} />
               <Box
                 sx={{
                   position: "absolute",

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Box, Grid, Card, CardContent, CardMedia, Typography, Pagination, Chip, IconButton } from "@mui/material";
 import { Share as ShareIcon, Bookmark as BookmarkIcon } from '@mui/icons-material';
-import getRelativeTime from "./util";
+import getRelativeTime from "../utils/util";
+import { getImageUrl } from "../utils/imageHelper";
 
 
 const sampleNews = [
@@ -150,7 +151,7 @@ const TodayNews =  () => {
             >
               <CardMedia
                 component="img"
-                image={article.media_url || "https://placeholder.co/150x150/orange/white"}
+                image={getImageUrl(article.media_url)}
                 alt={article.title}
                 sx={{
                   width: index === 0 ? '40%' : '100%',
