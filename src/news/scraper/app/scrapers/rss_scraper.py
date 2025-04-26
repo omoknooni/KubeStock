@@ -11,13 +11,14 @@ load_dotenv()
 
 # --- 환경 변수 로드 및 설정 ---
 RSS_FEED_URL = os.environ.get('RSS_FEED_URL')
+KO_RSS_FEED_URL = os.environ.get('KO_RSS_FEED_URL')
 DB_HOST = os.environ.get('DB_HOST')
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME')
 
 # 필수 환경 변수 확인
-if not all([RSS_FEED_URL, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
+if not all([KO_RSS_FEED_URL, RSS_FEED_URL, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
     print("[ERROR] Required environment variables are missing.")
     exit(1) # 필수 변수 없으면 종료
 
