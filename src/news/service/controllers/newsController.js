@@ -16,7 +16,7 @@ const getQueryConfig = (type) => {
     const configs = {
         [NEWS_TYPES.MAIN]: {
             query: `
-                SELECT id, title, link, pub_date, source, media_url 
+                SELECT id, title, link, pub_date, created_at, source, media_url 
                 FROM ?? 
                 WHERE pub_date >= NOW() - INTERVAL 7 DAY 
                 ORDER BY pub_date DESC 
@@ -26,7 +26,7 @@ const getQueryConfig = (type) => {
         },
         [NEWS_TYPES.HOT]: {
             query: `
-                SELECT id, title, link, pub_date, source, media_url 
+                SELECT id, title, link, pub_date, created_at, source, media_url 
                 FROM ?? 
                 ORDER BY pub_date DESC 
                 LIMIT 20
@@ -35,7 +35,7 @@ const getQueryConfig = (type) => {
         },
         [NEWS_TYPES.TODAY]: {
             query: `
-                SELECT id, title, link, pub_date, source, media_url 
+                SELECT id, title, link, pub_date, created_at, source, media_url 
                 FROM ?? 
                 WHERE DATE(pub_date) = CURDATE() 
                 ORDER BY pub_date DESC 

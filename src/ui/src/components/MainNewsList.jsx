@@ -140,7 +140,7 @@ const MainNews = () => {
                 <Typography variant="h6" fontWeight="bold">
                   {displayedNews[0].title}
                 </Typography>
-                <Typography variant="body2">{getRelativeTime(displayedNews[0].pub_date)} · {displayedNews[0].source}</Typography>
+                <Typography variant="body2">{getRelativeTime(displayedNews[0].pub_date || getRelativeTime(displayedNews[0].created_at))} · {displayedNews[0].source}</Typography>
               </Box>
             </Card>
           )}
@@ -161,7 +161,7 @@ const MainNews = () => {
                   {article.title.length > 30 ? article.title.slice(0, 30) + "..." : article.title}
                 </Typography>
                 <Typography variant="body2" color="gray">
-                  {getRelativeTime(article.pub_date)} · {article.source}
+                  {getRelativeTime(article.pub_date) || getRelativeTime(article.created_at)} · {article.source}
                 </Typography>
               </Box>
             </Box>

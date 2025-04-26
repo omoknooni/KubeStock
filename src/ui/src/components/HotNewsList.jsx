@@ -133,7 +133,7 @@ const HotNews =  () => {
           <CardContent>
             <Typography variant="h6">{article.title}</Typography>
             <Typography variant="body2" color="textSecondary">
-              {article.source} | {getRelativeTime(article.pub_date)}
+              {article.source} | {getRelativeTime(article.pub_date || article.created_at)}
             </Typography>
           </CardContent>
         </Card>

@@ -192,7 +192,7 @@ const TodayNews =  () => {
                   alignItems: 'center'
                 }}>
                   <Typography variant="body2" color="text.secondary">
-                    {getRelativeTime(article.pub_date)}
+                    {getRelativeTime(article.pub_date || article.created_at)}
                   </Typography>
                   <Box>
                     <IconButton size="small">
