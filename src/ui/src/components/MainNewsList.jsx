@@ -152,7 +152,7 @@ const MainNews = () => {
             <Box key={article.id} sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <CardMedia
                 component="img"
-                image={article.media_url}
+                image={getImageUrl(article.media_url)}
                 alt={article.title}
                 sx={{ width: 80, height: 80, borderRadius: 2, mr: 2 }}
               />
