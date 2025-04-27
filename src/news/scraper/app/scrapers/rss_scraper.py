@@ -70,6 +70,32 @@ def get_db_connection() -> Optional[pymysql.connections.Connection]:
         print(f"[DB_CONN_ERROR] An unexpected error occurred during connection: {e}")
         return None
 
+def truncate_string(text: str, max_length: int) -> str:
+    """
+    주어진 문자열이 최대 길이를 초과하면 잘라내고 '...'을 붙입니다.
+
+    Args:
+        text (str): 처리할 문자열.
+        max_length (int): 최대 허용 길이 (말줄임표 포함).
+
+    Returns:
+        str: 처리된 문자열.
+    """
+    if not isinstance(text, str): # 입력값이 문자열이 아닌 경우 처리
+        text = str(text)
+
+    if len(text) > max_length:
+        # max_length가 5보다 작으면 말줄임표를 붙일 수 없으므로 그냥 자르기만 함
+        if max_length < 5:
+             # 음수 인덱싱 방지
+             return text[:max(0, max_length)]
+        # 말줄임표 길이(5)를 제외한 길이만큼 자르고 '...' 추가
+        # max_length - 5이 음수가 되지 않도록 max(0, ...) 사용
+        return text[:max(0, max_length - 5)] + "..."
+    else:
+        # 길이가 제한 이내이면 원본 문자열 반환
+        return text
+
 def is_article_exists(conn: pymysql.connections.Connection, guid: str) -> bool:
     """
     DB에 이미 존재하는 기사인지 확인 (주어진 연결 사용)
@@ -156,6 +182,7 @@ def fetch_rss_feed():
             try:
                 # 주요 속성 추출
                 title = item.get('title', 'No Title Provided')
+                title = truncate_string(title, 255)
                 link = item.get('link', 'No Link Provided')
 
                 # description 추출 및 HTML 태그 제거
@@ -177,7 +204,8 @@ def fetch_rss_feed():
 
                 # guid가 없으면 link를 사용, 둘 다 중요하므로 누락 시 경고
                 guid = item.get("guid", item.get("link"))
-                if not guid:
+                guid = truncate_string(guid, 255)
+                if guid == "No Link Provided":
                     print(f"[WARN] Article skipped: Missing both guid and link for title '{title[:30]}...'")
                     skipped_count += 1
                     continue
@@ -188,7 +216,8 @@ def fetch_rss_feed():
 
                 # 기사 원본 정보 추출
                 source = item.get('author', item.get('dc_creator', item.get('creator', 'Unknown Author'))) # author 필드도 확인
-                
+                source = truncate_string(source, 100)
+
                 # 기사 대표 이미지 URL 추출
                 media_url = None
                 if "media_content" in item and item.media_content and isinstance(item.media_content, list):
