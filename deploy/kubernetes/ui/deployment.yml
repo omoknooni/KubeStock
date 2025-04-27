@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: ui
-        image: omoknooni/kubestock-ui:0ceda91
+        image: omoknooni/kubestock-ui:0b6f0c5
         ports:
         - containerPort: 80
