@@ -1,6 +1,7 @@
 import feedparser
 import pymysql
 import os
+import time
 from datetime import datetime
 from dateutil import parser
 from dotenv import load_dotenv
@@ -21,6 +22,11 @@ DB_NAME = os.environ.get('DB_NAME')
 if not all([KO_RSS_FEED_URL, RSS_FEED_URL, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME]):
     print("[ERROR] Required environment variables are missing.")
     exit(1) # 필수 변수 없으면 종료
+
+LANG = {
+    "ko": KO_RSS_FEED_URL,
+    "en": RSS_FEED_URL
+}
 
 DB_CONFIG: Dict[str, Any] = {
     'host': DB_HOST,
@@ -96,7 +102,7 @@ def truncate_string(text: str, max_length: int) -> str:
         # 길이가 제한 이내이면 원본 문자열 반환
         return text
 
-def is_article_exists(conn: pymysql.connections.Connection, guid: str) -> bool:
+def is_article_exists(conn: pymysql.connections.Connection, lang: str, guid: str) -> bool:
     """
     DB에 이미 존재하는 기사인지 확인 (주어진 연결 사용)
     """
@@ -105,8 +111,17 @@ def is_article_exists(conn: pymysql.connections.Connection, guid: str) -> bool:
         return False # 또는 예외 발생 고려
 
     try:
+        if lang == "en":
+            table_name = "rss_news"
+        elif lang == "ko":
+            table_name = "rss_news_ko"
+        else:
+            print(f"[Error] is_article_exists: Unsupported language '{lang}'")
+            return False
+        
         with conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) AS count FROM rss_news WHERE guid = %s", (guid,))
+            sql = f"SELECT COUNT(*) AS count FROM `{table_name}` WHERE guid = %s"
+            cursor.execute(sql, (guid,))
             result = cursor.fetchone()
         # 결과가 None이 아니고 'count' 키가 있는지 확인
         return result and result.get("count", 0) > 0
@@ -119,7 +134,7 @@ def is_article_exists(conn: pymysql.connections.Connection, guid: str) -> bool:
         print(f"[Error] is_article_exists - Unexpected error: {e}")
         return False
 
-def save_article(conn: pymysql.connections.Connection, title: str, description: str, link: str, guid: str, pub_date: datetime, source: str, media_url: Optional[str]):
+def save_article(conn: pymysql.connections.Connection, lang: str, title: str, description: str, link: str, guid: str, pub_date: datetime, source: str, media_url: Optional[str]):
     """
     기사를 DB에 저장 (주어진 연결 사용)
     """
@@ -129,10 +144,19 @@ def save_article(conn: pymysql.connections.Connection, title: str, description: 
 
     try:
         with conn.cursor() as cursor:
-            sql = """
-                INSERT INTO rss_news (title, description, link, guid, pub_date, source, media_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """
+            if lang == "en":
+                sql = """
+                    INSERT INTO rss_news (title, description, link, guid, pub_date, source, media_url)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+            elif lang == "ko":
+                sql = """
+                    INSERT INTO rss_news_ko (title, description, link, guid, pub_date, source, media_url)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+            else:
+                print(f"[Error] save_article: Unsupported language '{lang}'")
+                return
             # pub_date를 MySQL DATETIME 형식 문자열로 변환 (필요시)
             pub_date_str = pub_date.strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute(sql, (title, description, link, guid, pub_date_str, source, media_url))
@@ -140,18 +164,12 @@ def save_article(conn: pymysql.connections.Connection, title: str, description: 
             # conn.commit() # 각 건마다 커밋하려면 여기서 호출
             print(f"[DB_SAVE] Saved article: {title}")
     except pymysql.MySQLError as e:
-        print(f"[DB_ERROR] save_article - MySQL error: {e}")
-        # 필요시 롤백 처리
-        try:
-            conn.rollback()
-            print("[DB_ROLLBACK] Transaction rolled back.")
-        except Exception as re:
-            print(f"[Error] Failed to rollback transaction: {re}")
+        print(f"[DB_ERROR] save_article - MySQL error for article '{title[:30]}...': {e}")
     except Exception as e:
-        print(f"[Error] save_article - Unexpected error: {e}")
+        print(f"[Error] save_article - Unexpected error for article '{title[:30]}...': {e}")
 
 
-def fetch_rss_feed():
+def fetch_rss_feed(lang):
     """
     주어진 URL에서 RSS 피드를 가져와 파싱하고 DB에 저장
     """
@@ -164,7 +182,7 @@ def fetch_rss_feed():
             return # 연결 실패 시 함수 종료
 
         print(f"[*] Start RSS Feed Parse at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        feed = feedparser.parse(RSS_FEED_URL)
+        feed = feedparser.parse(LANG[lang])
 
         if feed.bozo:
             # 피드 파싱 오류 처리
@@ -203,12 +221,14 @@ def fetch_rss_feed():
                         cleaned_description = description_html # 파싱 실패 시 원본 HTML을 그대로 둘 수도 있음
 
                 # guid가 없으면 link를 사용, 둘 다 중요하므로 누락 시 경고
-                guid = item.get("guid", item.get("link"))
-                guid = truncate_string(guid, 255)
-                if guid == "No Link Provided":
+                original_guid = item.get("guid")
+                if not original_guid and link == "No Link Provided":
                     print(f"[WARN] Article skipped: Missing both guid and link for title '{title[:30]}...'")
                     skipped_count += 1
                     continue
+
+                guid_raw = original_guid if original_guid else link
+                guid = truncate_string(guid_raw, 255)
                 
                 # 기사 게재일자 추출
                 pub_date_str = item.get("published")
@@ -225,13 +245,13 @@ def fetch_rss_feed():
                     media_url = item.media_content[0].get("url")
 
                 # 데이터 저장 전 중복 확인
-                if is_article_exists(conn, guid):
+                if is_article_exists(conn, lang, guid):
                     # print(f"[INFO] Article already exists, skipping: {title}")
                     skipped_count += 1
                     continue
 
                 # 데이터 저장
-                save_article(conn, title, cleaned_description, link, guid, pub_date, source, media_url)
+                save_article(conn, lang, title, cleaned_description, link, guid, pub_date, source, media_url)
                 saved_count += 1
 
             except Exception as e:
@@ -284,8 +304,11 @@ if __name__ == "__main__":
 
     # 2. DB 연결 확인 후 RSS 피드 처리 시도
     try:
-        fetch_rss_feed()
-        print("[INFO] RSS Feed Fetching Process Completed.")
+        for feed in ["ko", "en"]:
+            print(f"[*] RSS Feed {feed} : {LANG[feed]}")
+            fetch_rss_feed(feed)
+            print("[INFO] RSS Feed Fetching Process Completed.")
+            time.sleep(2)
         exit(0) # 정상 종료
     except Exception as e:
         print(f"[CRITICAL_ERROR] An unhandled error occurred in the main process: {e}")
