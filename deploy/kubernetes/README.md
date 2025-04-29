@@ -55,3 +55,21 @@ deploy/kubernetes/
     ```
     kubectl apply -f deploy/kubernetes/apps/root-app.yml -n argo
     ```
+
+# Prometheus Monitoring
+이 프로젝트는 Prometheus와 Grafana를 통해 각 서비스 별 Metric과 발생되는 로그들을 관리합니다.  
+monitoring 네임스페이스 하위에 모니터링 관련 리소스를 관리  
+## 초기 구성 절차
+1. **Prometheus + Grafana 설치 (with Helm)**
+   ```bash
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+   helm repo update
+
+   kubectl create ns monitoring
+
+   helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
+   ```
+2. **Root App 등록**
+   ```bash
+   kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n monitoring
+   ```
