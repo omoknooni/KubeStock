@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: scraper
-            image: omoknooni/kubestock-news-scraper:0b6f0c5
+            image: omoknooni/kubestock-news-scraper:156a94f
             envFrom:
             - secretRef:
                 name: news-secret
