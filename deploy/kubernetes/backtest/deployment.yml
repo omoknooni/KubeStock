@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: backtest
-        image: omoknooni/kubestock-backtest:latest
+        image: omoknooni/kubestock-backtest:b8b9f2f
         ports:
         - containerPort: 8001
