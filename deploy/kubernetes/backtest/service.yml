@@ -9,6 +9,7 @@ spec:
   selector:
     app: backtest
   ports:
-    - port: 80
+    - name: http
+      port: 80
       protocol: TCP
       targetPort: 8001

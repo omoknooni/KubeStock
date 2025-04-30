@@ -58,20 +58,19 @@ deploy/kubernetes/
 
 # Prometheus Monitoring
 이 프로젝트는 Prometheus와 Grafana를 통해 각 서비스 별 Metric과 발생되는 로그들을 관리합니다.  
+`kube-prometheus-stack`을 통해 Prometheus Operator, Prometheus, AlertManager, Grafana를 한번에 구축    
 monitoring 네임스페이스 하위에 모니터링 관련 리소스를 관리  
 ## 초기 구성 절차
-1. **Prometheus + Grafana 설치 (with Helm)**
+1. **Helm repo 추가 및 Namespace 생성**
    ```bash
    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
    helm repo update
 
    kubectl create ns monitoring
-
-   helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
    ```
-2. **Root App 등록**
-   ```bash
-   kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n monitoring
+2. **kube-prometheus-stack 설치 (with Helm)**
+   ```
+   helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
    ```
 3. **DB exporter 등록**  
 DB 내역과 관련된 metric을 추출해오기 위한 mysqld-exporter를 구축
@@ -81,4 +80,9 @@ DB 내역과 관련된 metric을 추출해오기 위한 mysqld-exporter를 구�
     --set mysql.host="db.default.svc.cluster.local" \
     --set mysql.pass="PASSWD HERE" \
     --set mysql.port="3306"
+   ```
+4. **모니터링 Root App 등록**  
+Root App 하위에 포함된 각 서비스별 ServiceMonitor와 DB ServiceMonitor 등록
+   ```bash
+   kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n monitoring
    ```

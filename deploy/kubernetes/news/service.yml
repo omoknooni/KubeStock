@@ -10,6 +10,7 @@ spec:
   selector:
     app: rss-news-service
   ports:
-  - protocol: TCP
+  - name: http
+    protocol: TCP
     port: 80
     targetPort: 3000

@@ -1,15 +1,15 @@
-# Stocks 서비스의 /metrics endpoint로부터 메트릭 수집하는 ServiceMonitor
+# Backtest 서비스의 /metric endpoint로부터 메트릭 수집하는 ServiceMonitor
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: servicemonitor-stocks
+  name: servicemonitor-backtest
   namespace: monitoring
   labels:
     release: prometheus-stack
 spec:
   selector:
     matchLabels:
-      app: stocks
+      app: backtest
   namespaceSelector:
     matchNames: ["default"]
   endpoints:
