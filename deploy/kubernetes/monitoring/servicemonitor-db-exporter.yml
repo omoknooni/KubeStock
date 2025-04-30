@@ -1,0 +1,20 @@
+# mysql exporter로부터 메트릭 수집하는 ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: servicemonitor-db-exporter
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: mysql-exporter
+      app.kubernetes.io/name: prometheus-mysql-exporter
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: mysql-exporter
+      path: /metrics
+      interval: 15s

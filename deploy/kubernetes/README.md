@@ -73,3 +73,12 @@ monitoring 네임스페이스 하위에 모니터링 관련 리소스를 관리
    ```bash
    kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n monitoring
    ```
+3. **DB exporter 등록**  
+DB 내역과 관련된 metric을 추출해오기 위한 mysqld-exporter를 구축
+   ```bash
+   helm install db-exporter prometheus-community/prometheus-mysql-exporter -n monitoring \
+    --set mysql.user="USER HERE" \
+    --set mysql.host="db.default.svc.cluster.local" \
+    --set mysql.pass="PASSWD HERE" \
+    --set mysql.port="3306"
+   ```
