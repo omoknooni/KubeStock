@@ -9,7 +9,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: news
+      app: rss-news-service
   namespaceSelector:
     matchNames: ["default"]
   endpoints:

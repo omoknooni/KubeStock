@@ -16,6 +16,6 @@ spec:
     matchNames:
       - monitoring
   endpoints:
-    - port: mysql-exporter
+    - port: 9104
       path: /metrics
       interval: 15s

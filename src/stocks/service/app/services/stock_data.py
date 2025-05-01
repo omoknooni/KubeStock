@@ -109,28 +109,28 @@ def search_ticker(query: str):
 #                 raise ValueError(f"Error processing data: {str(e)}")
 
 
-# def fetch_stock_info(symbol: str):
-#     ticker = yf.Ticker(symbol)
-#     info = ticker.info
+def fetch_stock_info(symbol: str):
+    ticker = yf.Ticker(symbol)
+    info = ticker.info
 
-#     short_info = {}
+    short_info = {}
 
-#     quoteType = info.get('quoteType', 'N/A')
-#     short_info['quote_type'] = quoteType
-#     short_info['symbol'] = info.get('symbol', 'N/A')
+    quoteType = info.get('quoteType', 'N/A')
+    short_info['quote_type'] = quoteType
+    short_info['symbol'] = info.get('symbol', 'N/A')
 
-#     short_info['short_name']= info.get('shortName', 'N/A')
-#     short_info['business_summary'] = info.get('longBusinessSummary', 'No business summary available')
-#     if quoteType == 'EQUITY':
-#         short_info['industry'] = info.get('industry', 'N/A')
-#         short_info['sector'] = info.get('sector', 'N/A')
-#         short_info['per'] = info.get('trailingPE', 'N/A')
-#         short_info['pbr'] = info.get('priceToBook', 'N/A')
-#         short_info['eps'] = info.get('trailingEps', 'N/A')
-#         short_info['roe'] = info.get('returnOnEquity', 'N/A')
-#         short_info['roa'] = info.get('returnOnAssets', 'N/A')
-#     elif quoteType == 'ETF':
-#         short_info['fund_family'] = info.get('fundFamily', 'N/A')
-#         short_info['nav'] = info.get('navPrice', 'N/A')
+    short_info['short_name']= info.get('shortName', 'N/A')
+    short_info['business_summary'] = info.get('longBusinessSummary', 'No business summary available')
+    if quoteType == 'EQUITY':
+        short_info['industry'] = info.get('industry', 'N/A')
+        short_info['sector'] = info.get('sector', 'N/A')
+        short_info['per'] = info.get('trailingPE', 'N/A')
+        short_info['pbr'] = info.get('priceToBook', 'N/A')
+        short_info['eps'] = info.get('trailingEps', 'N/A')
+        short_info['roe'] = info.get('returnOnEquity', 'N/A')
+        short_info['roa'] = info.get('returnOnAssets', 'N/A')
+    elif quoteType == 'ETF':
+        short_info['fund_family'] = info.get('fundFamily', 'N/A')
+        short_info['nav'] = info.get('navPrice', 'N/A')
 
-#     return short_info
+    return short_info
