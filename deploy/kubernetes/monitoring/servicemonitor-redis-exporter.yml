@@ -6,7 +6,7 @@ metadata:
   name: servicemonitor-redis-exporter
   namespace: monitoring
   labels:
-    release: prometheus
+    release: prometheus-stack
 spec:
   selector:
     matchLabels:
@@ -21,3 +21,9 @@ spec:
       # port: 9121  # spec.endpoints[0].port in body must be of type string: "integer"
       path: /metrics
       interval: 15s
+
+
+
+# ServiceMonitor의 label.release는 prometheus CR에 정의된 ServiceMonitorSelector와 같은 것을 사용해야함!
+# 그 라벨이 붙은 ServiceMonitor만 수집함
+# https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Prometheus
