@@ -16,6 +16,8 @@ spec:
     matchNames:
       - monitoring
   endpoints:
-    - port: 9121
+    # ServiceMonitor의 endpoint에서의 port와 targetPort : https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Endpoint
+    - targetPort: 9121
+      # port: 9121  # spec.endpoints[0].port in body must be of type string: "integer"
       path: /metrics
       interval: 15s
