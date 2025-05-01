@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: stocks
-        image: omoknooni/kubestock-stocks:1b4ef96
+        image: omoknooni/kubestock-stocks:55f0be8
         ports:
         - containerPort: 8000
         envFrom:
