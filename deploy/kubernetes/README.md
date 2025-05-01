@@ -84,5 +84,5 @@ DB 내역과 관련된 metric을 추출해오기 위한 mysqld-exporter를 구�
 4. **모니터링 Root App 등록**  
 Root App 하위에 포함된 각 서비스별 ServiceMonitor와 DB ServiceMonitor 등록
    ```bash
-   kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n monitoring
+   kubectl apply -f deploy/kubernetes/monitoring/monitoring-app.yml -n argo
    ```

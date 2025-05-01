@@ -32,7 +32,7 @@ def root():
 
 # Prometheus metrics
 REQUEST_COUNT = Counter('request_count', 'Total number of requests', ["method", "endpoint", "http_status"])
-REQUEST_LATENCY = Histogram('request_latency_seconds', 'Request latency (seconds)', ["endpoint"])
+REQUEST_LATENCY = Histogram('request_latency_seconds', 'Request latency (seconds)', ["endpoint"], buckets=[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5])
 EXCEPTION_COUNT = Counter('exception_count', 'Total number of exceptions', ["endpoint", "exception"])
 
 @app.middleware("http")
@@ -40,6 +40,10 @@ async def metrics_middleware(request: Request, call_next):
     """
     각 요청에 따른 Prometheus Metric을 수집하는 미들웨어
     """
+    # /metrics 요청은 측정에서 제외
+    if request.url.path == "/metrics":
+        return await call_next(request)
+    
     start_time = time.time()
     endpoint = request.url.path
     method = request.method
@@ -47,8 +51,9 @@ async def metrics_middleware(request: Request, call_next):
         response = await call_next(request)
         status_code = response.status_code
     except Exception as e:
-        REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=500).inc()
+        status_code = 500
         EXCEPTION_COUNT.labels(endpoint=endpoint, exception=type(e).__name__).inc()
+        raise
     finally:
         latency = time.time() - start_time
         REQUEST_COUNT.labels(method=method, endpoint=endpoint, http_status=status_code).inc()

@@ -1,4 +1,5 @@
 # mysql exporter로부터 메트릭 수집하는 ServiceMonitor
+# mysql-exporter for helm : https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-mysql-exporter/values.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -9,7 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/instance: mysql-exporter
+      app.kubernetes.io/instance: db-exporter
       app.kubernetes.io/name: prometheus-mysql-exporter
   namespaceSelector:
     matchNames:

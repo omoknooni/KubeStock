@@ -44,7 +44,7 @@ jobs:
             news_scraper:
               - 'src/news/scraper/**'
             stocks:
-              - 'src/stocks/app/**'
+              - 'src/stocks/service/**'
             stocks_scraper:
               - 'src/stocks/scraper/**'
             ui:
