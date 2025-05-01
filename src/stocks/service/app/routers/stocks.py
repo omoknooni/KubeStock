@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
-from app.services.stock_data import fetch_stock_data, fetch_stock_info, search_ticker
-from app.services.market_status import MarketStatusService
+from fastapi import APIRouter, HTTPException
+from ..services.stock_data import fetch_stock_info, search_ticker
+from ..services.market_status import MarketStatusService
 from datetime import datetime
 from pydantic import BaseModel
 

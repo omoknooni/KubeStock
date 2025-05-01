@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import stocks
+from .routers import stocks
 
 from datetime import datetime
 from dotenv import load_dotenv
