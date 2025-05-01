@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Box, Grid, Card, CardContent, CardMedia, Typography, Pagination, Chip, IconButton } from "@mui/material";
+import { Container, Box, Grid, Card, CardContent, CardActionArea, CardMedia, Typography, Pagination, Chip, IconButton } from "@mui/material";
 import { Share as ShareIcon, Bookmark as BookmarkIcon } from '@mui/icons-material';
 import getRelativeTime from "../utils/util";
 import { getImageUrl } from "../utils/imageHelper";
@@ -11,70 +11,80 @@ const sampleNews = [
     title: "뉴스 제목 1",
     pub_date: "2025-02-03 11:23:00",
     source: "뉴스 제공사 1",
-    media_url: "https://placehold.co/150"
+    media_url: null,
+    link: "#"
   },
   {
     id: 2,
     title: "뉴스 제목 2",
     pub_date: "2025-02-02 18:30:23",
     source: "뉴스 제공사 2",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 3,
     title: "뉴스 제목 3",
     pub_date: "2025-02-01 09:45:00",
     source: "뉴스 제공사 3",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 4,
     title: "뉴스 제목 4",
     pub_date: "2025-01-31 14:20:00",
     source: "뉴스 제공사 4",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 5,
     title: "뉴스 제목 5",
     pub_date: "2025-01-30 16:10:00",
     source: "뉴스 제공사 5",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 6,
     title: "뉴스 제목 6",
     pub_date: "2025-01-29 12:00:00",
     source: "뉴스 제공사 6",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 7,
     title: "뉴스 제목 7",
     pub_date: "2025-01-28 10:00:00",
     source: "뉴스 제공사 7",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 8,
     title: "뉴스 제목 8",
     pub_date: "2025-01-27 09:00:00",
     source: "뉴스 제공사 8",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 9,
     title: "뉴스 제목 9",
     pub_date: "2025-01-26 23:32:12",
     source: "뉴스 제공사 9",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   },
   {
     id: 10,
     title: "뉴스 제목 10",
     pub_date: "2025-01-25 18:00:00",
     source: "뉴스 제공사 10",
-    media_url: "https://placehold.co/150"
+    media_url: "https://placehold.co/150",
+    link: "#"
   }
 ];
 
@@ -137,11 +147,9 @@ const TodayNews =  () => {
       <Grid container spacing={3}>
         {displayedNews.map((article, index) => (
           <Grid item xs={12} md={index === 0 ? 12 : 6} key={article.id}>
-            <Card 
-              sx={{ 
+            <Card
+              sx={{
                 height: '100%',
-                display: 'flex',
-                flexDirection: index === 0 ? 'row' : 'column',
                 transition: 'transform 0.2s',
                 '&:hover': {
                   transform: 'translateY(-4px)',
@@ -149,61 +157,77 @@ const TodayNews =  () => {
                 }
               }}
             >
-              <CardMedia
-                component="img"
-                image={getImageUrl(article.media_url)}
-                alt={article.title}
+              <CardActionArea
+                component="a"
+                href={article.link}
+                target="_blank"
+                rel="noopener noreferrer"
                 sx={{
-                  width: index === 0 ? '40%' : '100%',
-                  height: index === 0 ? 300 : 200,
-                  objectFit: 'cover'
+                  display: 'flex',
+                  flexDirection: index === 0 ? 'row' : 'column',
+                  height: '100%'
                 }}
-              />
-              <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ mb: 2 }}>
-                  <Chip 
-                    label={article.source}
-                    size="small"
-                    sx={{ mb: 1 }}
-                    color="primary"
+              >
+                {article.media_url && (
+                  <CardMedia
+                    component="img"
+                    image={getImageUrl(article.media_url)}
+                    alt={article.title}
+                    sx={{
+                      width: index === 0 ? '40%' : '100%',
+                      height: index === 0 ? 300 : 200,
+                      objectFit: 'cover'
+                    }}
                   />
-                  <Typography 
-                    variant={index === 0 ? "h5" : "h6"}
-                    sx={{ 
-                      fontWeight: 'bold',
-                      mb: 1,
-                      lineHeight: 1.4,
-                      height: index === 0 ? 'auto' : '3em',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
+                )}
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Chip
+                      label={article.source}
+                      size="small"
+                      sx={{ mb: 1 }}
+                      color="primary"
+                    />
+                    <Typography
+                      variant={index === 0 ? "h5" : "h6"}
+                      sx={{
+                        fontWeight: 'bold',
+                        mb: 1,
+                        lineHeight: 1.4,
+                        height: index === 0 ? 'auto' : '3em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}
+                    >
+                      {article.title}
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      mt: 'auto',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
                     }}
                   >
-                    {article.title}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ 
-                  mt: 'auto', 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {getRelativeTime(article.pub_date || article.created_at)}
-                  </Typography>
-                  <Box>
-                    <IconButton size="small">
-                      <BookmarkIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small">
-                      <ShareIcon fontSize="small" />
-                    </IconButton>
+                    <Typography variant="body2" color="text.secondary">
+                      {getRelativeTime(article.pub_date || article.created_at)}
+                    </Typography>
+                    <Box>
+                      <IconButton size="small">
+                        <BookmarkIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small">
+                        <ShareIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                </Box>
-              </CardContent>
+                </CardContent>
+              </CardActionArea>
             </Card>
           </Grid>
         ))}
@@ -213,7 +237,7 @@ const TodayNews =  () => {
         <Pagination
           count={Math.ceil(news.length / ITEMS_PER_PAGE)}
           page={page}
-          onChange={(event, value) => setPage(value)}
+          onChange={handleChange}
           color="primary"
           size="large"
           sx={{
