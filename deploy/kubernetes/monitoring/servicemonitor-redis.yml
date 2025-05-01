@@ -1,0 +1,21 @@
+# redis exporter로부터 메트릭 수집하는 ServiceMonitor
+# redis-exporter for helm : https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus-redis-exporter/values.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: servicemonitor-redis-exporter
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: redis-exporter
+      app.kubernetes.io/name: prometheus-redis-exporter
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  endpoints:
+    - port: 9121
+      path: /metrics
+      interval: 15s
