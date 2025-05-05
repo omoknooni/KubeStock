@@ -1,7 +1,7 @@
 // index.js
 require('dotenv').config();
 const express = require('express');
-const client = require('prom-client');
+const { Counter, Histogram, collectDefaultMetrics, register } = require('prom-client');
 
 const newsRoutes = require('./routes/news');
 const swaggerUi = require('swagger-ui-express');
@@ -14,25 +14,55 @@ const PORT = process.env.PORT || 3000;
 // Define Prometheus Metric
 client.collectDefaultMetrics();
 
-// HTTP 요청 지연 Metric 수집
-const httpRequestDurationMs = new client.Histogram({
-    name: 'http_request_duration_ms',
-    help: 'HTTP 요청 지연 시간 (ms)',
-    labelNames: ['method', 'route', 'status_code'],
-    buckets: [50, 100, 200, 300, 500, 1000],
+// 2) 사용자 정의 메트릭 정의
+const requestCount = new Counter({
+    name: 'request_count',
+    help: 'Total number of HTTP requests',
+    labelNames: ['method', 'route', 'http_status'],
   });
   
-// 모든 요청에 Metric 수집되도록 미들웨어
-app.use((req, res, next) => {
-    const endTimer = httpRequestDurationMs.startTimer({
-        method: req.method,
-        route: req.route ? req.route.path : req.path,  // 라우트 패턴으로 라벨링
-    });
+  const requestLatency = new Histogram({
+    name: 'request_latency_seconds',
+    help: 'Request latency in seconds',
+    labelNames: ['route'],
+    buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+  });
+  
+  const exceptionCount = new Counter({
+    name: 'exception_count',
+    help: 'Total number of exceptions',
+    labelNames: ['route', 'exception'],
+  });
+  
+  // 3) 메트릭 제외 & 측정 미들웨어
+  app.use((req, res, next) => {
+    // /metrics 요청은 측정에서 제외
+    if (req.path === '/metrics') {
+      return next();
+    }
+  
+    // 타이머 시작
+    const endTimer = requestLatency.startTimer({ route: req.route?.path || req.path });
+  
+    // 응답이 끝난 뒤 카운터 & 예외 체크
     res.on('finish', () => {
-        endTimer({ status_code: res.statusCode });
+      const route = req.route?.path || req.path;
+      const status = res.statusCode;
+  
+      // 요청 카운트
+      requestCount.labels(req.method, route, status).inc();
+  
+      // latency 관측
+      endTimer();
+  
+      // HTTP 5xx를 예외로 간주해 exception_count 증가
+      if (status >= 500) {
+        exceptionCount.labels(route, `HTTP_${status}`).inc();
+      }
     });
+  
     next();
-});
+  });
 
 // 미들웨어 설정
 app.use(express.json());
@@ -47,10 +77,16 @@ app.get('/health', (req, res) => {
     res.send('Welcome to the News Service');
 });
 
+app.use((err, req, res, next) => {
+    const route = req.route?.path || req.path;
+    exceptionCount.labels(route, err.name).inc();
+    next(err);
+  });
+
 // Prometheus Metric Endpoint
 app.get('/metrics', async (req, res) => {
-    res.set('Content-Type', client.register.contentType);
-    res.end(await client.register.metrics());
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
 });
 
 // DB test connection
