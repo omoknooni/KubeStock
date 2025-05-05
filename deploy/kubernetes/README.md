@@ -85,7 +85,7 @@ DB 내역과 관련된 metric을 추출해오기 위한 mysqld-exporter를 구�
 Redis 관련 Metric을 추출해오기 위한 redis-exporter를 구축
    ```bash
    helm install redis-exporter prometheus-community/prometheus-redis-exporter -n monitoring \ 
-   --set redis.addr="redis://redis-service.default.svc.cluster.local:6379" \ 
+   --set redisAddress="redis://redis-service.default.svc.cluster.local:6379" \ 
 
    ```
 5. **모니터링 Root App 등록**  
