@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Define Prometheus Metric
-client.collectDefaultMetrics();
+collectDefaultMetrics();
 
 // 2) 사용자 정의 메트릭 정의
 const requestCount = new Counter({
