@@ -9,6 +9,6 @@ kubectl create secret generic stocks-secret --from-env-file=path/to/.env
 use .env.example file's format
 ```
 REDIS_HOST=
-STOCK_API_KEY=
-MARKET_API_KEY
+MARKET_API_KEY=
+EDGAR_USER=
 ```

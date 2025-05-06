@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from ..services.stock_data import fetch_stock_info, search_ticker
 from ..services.market_status import MarketStatusService
+from ..services.thirteen_api import fetch_filing_meta, fetch_inout_changes, fetch_portfolio_overview
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -9,34 +10,24 @@ router = APIRouter(prefix="/api/stocks", tags=["Stocks"])
 class StockData(BaseModel):
     query: str
 
-# @router.get("/{symbol}")
-# async def get_stock_data(symbol: str):
-#     """
-#     Return real-time data for a specific stock symbol
-#     """
-#     # Validate symbol (you can adjust the validation rules as needed)
-#     if not symbol or len(symbol.strip()) == 0:
-#         raise HTTPException(status_code=400, detail="Invalid symbol provided")
-#     try:
-#         stock_data = await fetch_stock_data(symbol)
-        
-#         # Handle case when no data is found
-#         if stock_data is None:
-#             raise HTTPException(
-#                 status_code=404,
-#                 detail=f"No data found for symbol: {symbol}"
-#             )
-            
-#         return {"status":"success", "symbol": symbol, "data": stock_data}
-        
-#     except ValueError as ve:
-#         raise HTTPException(
-#             status_code=status.HTTP_429_TOO_MANY_REQUESTS if "API 제한" in str(ve)
-#             else status.HTTP_400_BAD_REQUEST,
-#             detail=str(ve)
-#         )    
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error fetching data: {str(e)}")
+class FilingMetaResponse(BaseModel):
+    cik: str
+    filing_date: str
+    report_date: str
+    total_assets: float
+
+class Holding(BaseModel):
+    issuer: str
+    cusip: str
+    value: float
+    shares: int
+    holding_rate: float
+
+class PortfolioOverviewResponse(BaseModel):
+    cik: str
+    total_holdings_cnt: int
+    total_value: float
+    holdings: list[Holding]
 
 @router.get("/{symbol}/info")
 def get_stock_info(symbol: str):
@@ -64,8 +55,35 @@ def search_from_ticker(query: StockData):
     """
     Return stock's ticker and full name for a specific symbol part
     """
-    # Implement logic to search for stocks based on symbol part
-    # This could involve querying a database or an external API
-    # For simplicity, let's assume we have a function that returns search results
     search_results = search_ticker(query)
     return search_results
+
+@router.get("/filing_meta/{cik}", response_model=FilingMetaResponse)
+def get_filing_meta(cik: str):
+    """
+    Returns meta information for the latest 13F-HR filing of the given CIK
+    """
+    try:
+        return fetch_filing_meta(cik)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error fetching filing meta: {str(e)}")
+    
+@router.get("/portfolio_overview/{cik}", response_model=PortfolioOverviewResponse)
+def get_portfolio_overview(cik: str):
+    """
+    Returns portfolio overview for the latest 13F-HR filing of the given CIK
+    """
+    try:
+        return fetch_portfolio_overview(cik)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error fetching portfolio overview: {str(e)}")
+    
+@router.get("/inout/{cik}")
+def get_inout_changes(cik: str):
+    """
+    전 분기 대비 신규 편입/편출 종목 목록 반환
+    """
+    try:
+        return fetch_inout_changes(cik)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

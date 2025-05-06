@@ -86,7 +86,6 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          text: |
-            *${{ inputs.service }}* 이미지가 *${{ inputs.tag }}* 버전으로 업데이트 되었습니다.
-            *${{ inputs.service }}* 이미지: ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ inputs.tag }}
-            *${{ inputs.service }}* Kubernetes Manifest: ${{ steps.ctx.outputs.kube_path }}
+          payload: |
+            text: "*${{ inputs.service }}* 이미지가 *${{ inputs.tag }}* 버전으로 업데이트 되었습니다.\n*${{ inputs.service }}* 이미지: ${{ secrets.DOCKER_USERNAME }}/${{ steps.ctx.outputs.name }}:${{ inputs.tag }}\n*${{ inputs.service }}* Kubernetes Manifest: ${{ steps.ctx.outputs.kube_path }}"
+            
