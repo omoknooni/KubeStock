@@ -44,6 +44,9 @@ const Navbar = ({ onSearch }) => {
           <IconButton color="inherit" onClick={() => navigate('/backtest')}>
             Backtest
           </IconButton>
+          <IconButton color="inherit" onClick={() => navigate('/followup')}>
+            Celebrity
+          </IconButton>
         </Box>
 
 

@@ -8,6 +8,7 @@ import StockInfo from "./pages/StockInfo";
 import News from "./pages/News";
 import Backtest from "./pages/BackTest";
 import TickerTape from "./components/TickerTape";
+import CelebrityTracker from "./pages/CelebrityTracker";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
         <Route path="/stocks/:stockSymbol/info" element={<StockInfo />} />
         <Route path="/news" element={<News />} />
         <Route path="/backtest" element={<Backtest />} />
+        <Route path="/followup" element={<CelebrityTracker />}/>
       </Routes>
       <TickerTape />
     </Router>
