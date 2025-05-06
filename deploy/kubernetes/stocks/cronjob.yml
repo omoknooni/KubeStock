@@ -11,6 +11,26 @@ spec:
           containers:
           - name: ticker-scraper
             image: omoknooni/kubestock-stocks-scraper:latest
+            args: ["ticker"]
+            envFrom:
+            - secretRef:
+                name: stocks-secret
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: thirteenf-scraper
+spec:
+  schedule: "0 5 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: report-scraper
+            image: omoknooni/kubestock-stocks-scraper:latest
+            args: ["thirteenf"]
             envFrom:
             - secretRef:
                 name: stocks-secret

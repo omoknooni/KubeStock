@@ -37,29 +37,34 @@ data:
     );
 
     CREATE TABLE funds (
-        id            SERIAL      PRIMARY KEY,
+        id            INT AUTO_INCREMENT PRIMARY KEY,
         cik           VARCHAR(10) NOT NULL UNIQUE,
         name          VARCHAR(255)
     );
 
     CREATE TABLE filings (
-        id            SERIAL      PRIMARY KEY,
-        fund_id       INTEGER     NOT NULL REFERENCES funds(id) ON DELETE CASCADE,
+        id            INT AUTO_INCREMENT PRIMARY KEY,
+        fund_id       INT NOT NULL,
         filing_date   DATE        NOT NULL,
         report_date   DATE        NOT NULL,
-        total_assets  NUMERIC(18,2),
+        total_assets  INT,
         created_at    TIMESTAMP   NOT NULL DEFAULT NOW(),
-        UNIQUE (fund_id, filing_date)
+        UNIQUE KEY  uq_fund_filing   (fund_id, filing_date),
+        INDEX       idx_filings_fund (fund_id),
+        FOREIGN KEY (fund_id)        REFERENCES funds(id) ON DELETE CASCADE
     );
 
     CREATE TABLE holdings (
-        id             SERIAL      PRIMARY KEY,
-        filing_id      INTEGER     NOT NULL REFERENCES filings(id) ON DELETE CASCADE,
+        id             INT AUTO_INCREMENT PRIMARY KEY,
+        filing_id      INT NOT NULL,
         issuer         VARCHAR(255),
         cusip          VARCHAR(12),
-        value          NUMERIC(18,2),
-        shares         BIGINT,
+        value          INT,
+        shares         INT,
         share_type     VARCHAR(50),
-        holding_rate   NUMERIC(5,2),
-        UNIQUE (filing_id, cusip)
+        holding_rate   DECIMAL(5,2),
+        UNIQUE KEY     uq_holding      (filing_id, cusip),
+        INDEX          idx_hold_filing (filing_id),
+        INDEX          idx_hold_cusip  (cusip),
+        FOREIGN KEY    (filing_id)     REFERENCES filings(id) ON DELETE CASCADE
     );
