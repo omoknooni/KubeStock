@@ -35,3 +35,31 @@ data:
         name VARCHAR(255) NOT NULL,
         exchange VARCHAR(50)
     );
+
+    CREATE TABLE funds (
+        id            SERIAL      PRIMARY KEY,
+        cik           VARCHAR(10) NOT NULL UNIQUE,
+        name          VARCHAR(255)
+    );
+
+    CREATE TABLE filings (
+        id            SERIAL      PRIMARY KEY,
+        fund_id       INTEGER     NOT NULL REFERENCES funds(id) ON DELETE CASCADE,
+        filing_date   DATE        NOT NULL,
+        report_date   DATE        NOT NULL,
+        total_assets  NUMERIC(18,2),
+        created_at    TIMESTAMP   NOT NULL DEFAULT NOW(),
+        UNIQUE (fund_id, filing_date)
+    );
+
+    CREATE TABLE holdings (
+        id             SERIAL      PRIMARY KEY,
+        filing_id      INTEGER     NOT NULL REFERENCES filings(id) ON DELETE CASCADE,
+        issuer         VARCHAR(255),
+        cusip          VARCHAR(12),
+        value          NUMERIC(18,2),
+        shares         BIGINT,
+        share_type     VARCHAR(50),
+        holding_rate   NUMERIC(5,2),
+        UNIQUE (filing_id, cusip)
+    );
