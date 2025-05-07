@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import pymysql
 from edgar import find_fund, set_identity
 from dotenv import load_dotenv
 
@@ -8,107 +9,147 @@ EDGAR_USER = os.getenv("EDGAR_USER")
 if EDGAR_USER:
     set_identity(EDGAR_USER)
 
-def _require_edgar_user(func):
-    def wrapper(*args, **kwargs):
-        if not EDGAR_USER:
-            return {"error": "EDGAR_USER environment var is not set"}
-        return func(*args, **kwargs)
-    return wrapper
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+}
 
-@_require_edgar_user
-def _fetch_latest_13f_obj(cik:str):
-    """
-    최신 13F-HR 리포트 객체 반환
-    """
-    filings = find_fund(cik).get_filings(form="13F-HR")
-    obj = filings.latest().obj()
-    return obj
+def get_conn():
+    return pymysql.connect(**DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
 
-@_require_edgar_user
-def _fetch_13f_df(cik: str) -> pd.DataFrame:
-    """
-    최신 13F-HR 리포트 DataFrame 반환
-    """
-
-    obj = _fetch_latest_13f_obj(cik)
-    df = obj.infotable
-    return df
-
-@_require_edgar_user
 def fetch_filing_meta(cik: str):
     """
     최신 13F-HR 제출 메타정보를 dict로 반환
     """
-    obj = _fetch_latest_13f_obj(cik)
-    
-    return {
-        "cik": cik,
-        "filing_date": obj.filing_date,
-        "report_date": obj.report_period,
-        "total_assets": int(obj.total_value)
-    }
-
-@_require_edgar_user
-def fetch_portfolio_overview(cik: str):
-    """
-    최신 13F 보유 종목 개요를 dict로 반환
-    """
-    df = _fetch_13f_df(cik)
-    df = df.sort_values("Value", ascending=False)
-    meta = fetch_filing_meta(cik)
-    total_value = meta.get("total_assets",0)
-
-    holdings = []
-    # 갯수제한? => 특정 cik는 3000개 이상 종목이 있음
-    for _, row in df.iterrows():
-        holdings.append({
-            "issuer": row.get("Issuer"),
-            "cusip": row.get("Cusip"),
-            "value": row.get("Value"),
-            "shares": int(row.get("SharesPrnAmount")),
-            "holding_rate": round(row.get("Value") / total_value * 100, 2)
-        })
-    return {
-        "cik": cik,
-        "total_holdings_cnt": len(holdings),
-        "total_value": total_value,
-        "holdings": holdings
-    }
-
-@_require_edgar_user
-def fetch_inout_changes(cik: str):
-    """
-    최신 두 개 리포트를 비교해 신규 편입/완전 청산 종목을 dict로 반환
-    """
-    recent_filings = find_fund(cik).get_filings(form="13F-HR").latest(2)
-    if len(recent_filings) < 2:
-        raise ValueError("Not enough report")
-    
-    current = recent_filings[0].obj().infotable
-    previous = recent_filings[1].obj().infotable
-
-    current.set_index("Cusip", inplace=True)
-    previous.set_index("Cusip", inplace=True)
-
-    # 신규편입 / 편출된 종목
-    new_positions = current.index.difference(previous.index).tolist()
-    exited_positions = previous.index.difference(current.index).tolist()
-
-    # 종목의 비중 변경 탐색
-    changed = {}
-    for cusip in current.index.intersection(previous.index):
-        current_values = current.loc[cusip].get("Value")
-        previous_values = previous.loc[cusip].get("Value")
-        if current_values != previous_values:
-            changed[cusip] = {
-                "previous": int(previous_values),
-                "current": int(current_values),
-                "rate_changed": int((current_values - previous_values) / previous_values * 100)
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT fi.filing_date, fi.report_date, fi.total_assets
+                FROM filings fi
+                JOIN funds fu ON fi.fund_id = fu.id
+                WHERE fu.cik = %s
+                ORDER BY fi.filing_date DESC
+                LIMIT 1
+                """, (cik,)
+            )
+            row = cursor.fetchone()
+            if not row:
+                raise ValueError(f"No filings found for CIK {cik}")
+            return {
+                "cik": cik,
+                "filing_date": row["filing_date"].isoformat(),
+                "report_date": row["report_date"].isoformat(),
+                "total_assets": float(row["total_assets"])
             }
+    finally:
+        conn.close()
 
-    return {
-        "cik": cik,
-        "new": list(new_positions),
-        "exited": list(exited_positions),
-        "changed": changed
-    }
+# 가장 최신 포트폴리오 fetch
+def fetch_portfolio_overview(cik: str) -> dict:
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT fi.id AS filing_id, fi.total_assets
+                FROM filings fi
+                JOIN funds fu ON fi.fund_id = fu.id
+                WHERE fu.cik = %s
+                ORDER BY fi.filing_date DESC
+                LIMIT 1
+                """, (cik,)
+            )
+            fil = cursor.fetchone()
+            if not fil:
+                raise ValueError(f"No filings found for CIK {cik}")
+            filing_id = fil["filing_id"]
+            total_assets = float(fil["total_assets"])
+
+            # 분기별 종목 수, 총 금액
+            cursor.execute(
+                "SELECT COUNT(*) AS cnt, COALESCE(SUM(value),0) AS total "
+                "FROM holdings WHERE filing_id = %s",
+                (filing_id,)
+            )
+            summary = cursor.fetchone()
+
+            # 분기별 종목 내용
+            cursor.execute(
+                """
+                SELECT issuer, cusip, value, shares, holding_rate
+                FROM holdings
+                WHERE filing_id = %s
+                ORDER BY value DESC
+                """, (filing_id,)
+            )
+            holdings = cursor.fetchall()
+
+            return {
+                "cik": cik,
+                "total_holdings_cnt": summary["cnt"],
+                "total_value": float(summary["total"]),
+                "holdings": [
+                    {
+                        "issuer": h["issuer"],
+                        "cusip": h["cusip"],
+                        "value": float(h["value"]),
+                        "shares": int(h["shares"]),
+                        "holding_rate": float(h["holding_rate"])
+                    }
+                    for h in holdings
+                ]
+            }
+    finally:
+        conn.close()
+
+# 분기별 종목의 변화
+def fetch_inout_changes(cik: str) -> dict:
+    conn = get_conn()
+    try:
+        with conn.cursor() as cursor:
+            # 가장 최근 2개의 filing id
+            cursor.execute(
+                """
+                SELECT fi.id AS filing_id
+                FROM filings fi
+                JOIN funds fu ON fi.fund_id = fu.id
+                WHERE fu.cik = %s
+                ORDER BY fi.filing_date DESC
+                LIMIT 2
+                """, (cik,)
+            )
+            rows = cursor.fetchall()
+            if len(rows) < 2:
+                raise ValueError(f"Not enough filings to compare for CIK {cik}")
+
+            current_id = rows[0]["filing_id"]
+            prev_id = rows[1]["filing_id"]
+
+            # 현재 분기(가장 최근)의 종목과 값
+            cursor.execute("SELECT cusip, value FROM holdings WHERE filing_id = %s", (current_id,))
+            current = {r["cusip"]: float(r["value"]) for r in cursor.fetchall()}
+
+            # 이전 분기(가장 최근의 직전)의 종목과 값
+            cursor.execute("SELECT cusip, value FROM holdings WHERE filing_id = %s", (prev_id,))
+            previous = {r["cusip"]: float(r["value"]) for r in cursor.fetchall()}
+
+            # 변동 내역 비교 (신규 편입/편출, 비중 변화)
+            new_positions = list(set(current) - set(previous))
+            exited_positions = list(set(previous) - set(current))
+            changed = {}
+            for cusip in set(current).intersection(previous):
+                if current[cusip] != previous[cusip]:
+                    rate = round((current[cusip] - previous[cusip]) / previous[cusip] * 100, 2) if previous[cusip] else 0.0
+                    changed[cusip] = {
+                        "previous": previous[cusip],
+                        "current": current[cusip],
+                        "rate_changed": rate
+                    }
+
+            return {"cik": cik, "new": new_positions, "exited": exited_positions, "changed": changed}
+    finally:
+        conn.close()
