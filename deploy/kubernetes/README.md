@@ -26,15 +26,17 @@ deploy/kubernetes/
 └── create-secret.sh # 시크릿 생성 스크립트 (수동 실행 또는 Job 변환 필요)
 ```
 
----
+## Deploy architecture with ArgoCD
+![argocd_architecture](../../img/20250507_224044_1.png)
 
 ## App-of-Apps?
 
 - **root-app.yaml**: Argo CD에서 최상위 Application이며, 모든 하위 서비스를 Application 리소스로 포함하는 구조
 - **recurse: true**를 이용해 `apps/` 디렉토리의 모든 Application 정의를 자동으로 동기화
 - 각 서비스는 자체 디렉토리에 정의된 `Deployment`, `Service`, `CronJob` 등의 리소스를 포함  
--> 각 서비스들에 접근권한을 부여하는 등 역할 분리가 가능해짐 
+-> 각 서비스들에 접근권한을 부여하는 등 역할 분리가 가능해짐  
 
+  ![app_of_apps](../../img/20250507_224410.png)
 ---
 
 ## 초기 구성 절차
@@ -60,6 +62,10 @@ deploy/kubernetes/
 이 프로젝트는 Prometheus와 Grafana를 통해 각 서비스 별 Metric과 발생되는 로그들을 관리합니다.  
 `kube-prometheus-stack`을 통해 Prometheus Operator, Prometheus, AlertManager, Grafana를 한번에 구축    
 monitoring 네임스페이스 하위에 모니터링 관련 리소스를 관리  
+
+## 모니터링 아키텍처
+![monitoring_architecture](../../img/20250507_224044_2.png)
+
 ## 초기 구성 절차
 1. **Helm repo 추가 및 Namespace 생성**
    ```bash
