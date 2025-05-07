@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: ticker-scraper
-            image: omoknooni/kubestock-stocks-scraper:latest
+            image: omoknooni/kubestock-stocks-scraper:44a0268
             args: ["ticker"]
             envFrom:
             - secretRef:
@@ -29,7 +29,7 @@ spec:
         spec:
           containers:
           - name: report-scraper
-            image: omoknooni/kubestock-stocks-scraper:latest
+            image: omoknooni/kubestock-stocks-scraper:44a0268
             args: ["thirteenf"]
             envFrom:
             - secretRef:
