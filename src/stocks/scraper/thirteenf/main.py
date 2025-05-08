@@ -3,6 +3,7 @@ import pandas as pd
 import pymysql
 import os
 from dotenv import load_dotenv
+import pymysql.cursors
 
 load_dotenv()
 
@@ -61,7 +62,7 @@ def check_connectivity():
     DB connection check
     """
     try:
-        conn = pymysql.connect(**Config.DB_CONFIG)
+        conn = pymysql.connect(**Config.DB_CONFIG, cursorclass=pymysql.cursors.DictCursor)
         with conn.cursor() as c:
             c.execute("SELECT 1")
         return True, conn

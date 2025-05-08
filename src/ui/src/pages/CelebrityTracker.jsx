@@ -5,9 +5,9 @@ import CelebrityCard from '../components/CelebrityCard';
 
 const CelebrityTracker = () => {
   const CELEBRITIES = [
-    { name: 'Warren Buffett', cik: '0001067983', img: '/images/celebrity/buffett.jpg', desc: 'Berkshire Hathaway 회장' },
-    { name: 'Bill Gates', cik: '0001166559', img: '/images/celebrity/gates.jpg', desc: 'Microsoft 회장' },
-    { name: 'Stanley Druckenmiller', cik: '0001536411', img: '/images/celebrity/druckenmiller.jpg', desc: 'Pfizer 회장' }
+    { name: 'Warren Buffett', cik: '0001067983', img: 'image/celebrity/buffet.png', desc: 'Berkshire Hathaway 회장' },
+    { name: 'Bill Gates', cik: '0001166559', img: 'image/celebrity/gates.png', desc: 'Microsoft 회장' },
+    { name: 'Stanley Druckenmiller', cik: '0001536411', img: 'image/celebrity/druckenmiller.png', desc: 'Pfizer 회장' }
     // { name: 'Catherine Duddy Wood', cik: ''}
   ];
 
