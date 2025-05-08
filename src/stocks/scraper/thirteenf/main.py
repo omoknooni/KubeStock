@@ -69,10 +69,20 @@ def check_connectivity():
         print(f"[!] DB Connection Error: {e}")
         return False, None
 
+# 기본적으로 DB의 funds 테이블에 존재하는 cik들만 스크래핑하긴 함
+ALLOWED_CIKS = (
+    "0001067983",   # 버크셔
+    "0001166559",   # 빌게이츠
+    "0001536411",   # 드러켄 밀러
+    "0001697748",   # 캐시우드
+)
+
 def load_funds(conn):
     try:
+        fmt = ','.join('%s' for _ in ALLOWED_CIKS)
+        sql = f"SELECT id, cik FROM funds WHERE cik IN ({fmt})"
         with conn.cursor() as c:
-            c.execute("SELECT id, cik FROM funds")
+            c.execute(sql, ALLOWED_CIKS)
             funds = c.fetchall()
         return funds
     except pymysql.Error as e:

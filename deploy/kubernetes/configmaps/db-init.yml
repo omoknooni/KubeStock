@@ -42,6 +42,12 @@ data:
         name          VARCHAR(255)
     );
 
+    # Scraping Target init
+    INSERT INTO funds(id, cik, name) VALUES (1,"0001067983", "Berkshire Hathaway Inc");
+    INSERT INTO funds(id, cik, name) VALUES (2,"0001166559", "GATES FOUNDATION TRUST");
+    INSERT INTO funds(id, cik, name) VALUES (3,"0001536411", "Duquesne Family Office LLC");
+    INSERT INTO funds(id, cik, name) VALUES (4,"0001697748", "ARK Investment Management LLC");
+
     CREATE TABLE filings (
         id            INT AUTO_INCREMENT PRIMARY KEY,
         fund_id       INT NOT NULL,
